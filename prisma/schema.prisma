@@ -1,0 +1,159 @@
+// AI Homework Helper Database Schema
+// Optimized for Socratic tutoring and gamification
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Parent accounts
+model Parent {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  name          String
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  children      Child[]
+
+  @@map("parents")
+}
+
+// Child profiles
+model Child {
+  id              String   @id @default(uuid())
+  parentId        String   @map("parent_id")
+  name            String
+  age             Int
+  gradeLevel      Int      @map("grade_level")
+  avatarUrl       String?  @map("avatar_url")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  parent          Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  progress        ChildProgress?
+  conversations   Conversation[]
+  badges          ChildBadge[]
+  streaks         DailyStreak[]
+
+  @@map("children")
+}
+
+// Child progress tracking
+model ChildProgress {
+  id              String   @id @default(uuid())
+  childId         String   @unique @map("child_id")
+  totalXp         Int      @default(0) @map("total_xp")
+  level           Int      @default(1)
+  currentStreak   Int      @default(0) @map("current_streak")
+  longestStreak   Int      @default(0) @map("longest_streak")
+  totalQuestions  Int      @default(0) @map("total_questions")
+  correctAnswers  Int      @default(0) @map("correct_answers")
+  totalTimeMinutes Int     @default(0) @map("total_time_minutes")
+  lastActiveAt    DateTime @default(now()) @map("last_active_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  child           Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@map("child_progress")
+}
+
+// Math problems
+model Problem {
+  id              String   @id @default(uuid())
+  question        String
+  answer          String
+  difficulty      Int      // 1-5
+  topic           String   // "addition", "subtraction", etc.
+  hints           Json     // Array of hints
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  conversations   Conversation[]
+
+  @@map("problems")
+}
+
+// Conversation sessions
+model Conversation {
+  id              String   @id @default(uuid())
+  childId         String   @map("child_id")
+  problemId       String   @map("problem_id")
+  status          String   // "active", "completed", "abandoned"
+  startedAt       DateTime @default(now()) @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  xpEarned        Int      @default(0) @map("xp_earned")
+
+  child           Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  problem         Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  turns           ConversationTurn[]
+
+  @@map("conversations")
+}
+
+// Individual conversation turns
+model ConversationTurn {
+  id              String   @id @default(uuid())
+  conversationId  String   @map("conversation_id")
+  turnNumber      Int      @map("turn_number")
+  userMessage     String   @map("user_message")
+  aiResponse      String   @map("ai_response")
+  isCorrect       Boolean? @map("is_correct")
+  hintsUsed       Int      @default(0) @map("hints_used")
+  timeSeconds     Int      @map("time_seconds")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("conversation_turns")
+}
+
+// Badge definitions
+model Badge {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  description     String
+  iconUrl         String   @map("icon_url")
+  category        String   // "achievement", "streak", "mastery", "special"
+  rarity          String   // "common", "rare", "epic", "legendary"
+  criteria        Json     // { type: "streak", value: 7 }
+  xpReward        Int      @default(0) @map("xp_reward")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  children        ChildBadge[]
+
+  @@map("badges")
+}
+
+// Badge awards to children
+model ChildBadge {
+  id              String   @id @default(uuid())
+  childId         String   @map("child_id")
+  badgeId         String   @map("badge_id")
+  earnedAt        DateTime @default(now()) @map("earned_at")
+
+  child           Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  badge           Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, badgeId])
+  @@map("child_badges")
+}
+
+// Daily activity tracking
+model DailyStreak {
+  id              String   @id @default(uuid())
+  childId         String   @map("child_id")
+  date            DateTime @db.Date
+  questionsAnswered Int    @default(0) @map("questions_answered")
+  timeMinutes     Int      @default(0) @map("time_minutes")
+  xpEarned        Int      @default(0) @map("xp_earned")
+
+  child           Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, date])
+  @@map("daily_streaks")
+}

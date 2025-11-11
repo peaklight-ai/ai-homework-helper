@@ -1,0 +1,313 @@
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { MathProblem } from '@/lib/sampleProblems'
+
+interface Message {
+  role: 'user' | 'model'
+  parts: string
+  isCorrect?: boolean
+}
+
+interface ConversationProps {
+  problem: MathProblem
+  childName?: string
+  onComplete?: (xpEarned: number) => void
+}
+
+export function Conversation({ problem, childName = 'Student', onComplete }: ConversationProps) {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: 'model',
+      parts: `Hi ${childName}! I'm your AI tutor. Let's solve this problem together! What do you think the first step is?`
+    }
+  ])
+  const [input, setInput] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [isComplete, setIsComplete] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(scrollToBottom, [messages])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!input.trim() || isLoading) return
+
+    const userMessage: Message = { role: 'user', parts: input }
+    setMessages(prev => [...prev, userMessage])
+    const userInput = input
+    setInput('')
+    setIsLoading(true)
+
+    // Add a placeholder message for streaming
+    const aiMessageIndex = messages.length + 1
+    setMessages(prev => [...prev, { role: 'model', parts: '' }])
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userMessage: userInput,
+          problem,
+          conversationHistory: messages
+        })
+      })
+
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      let aiResponse = ''
+      let isCorrect = false
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          const chunk = decoder.decode(value, { stream: true })
+          const lines = chunk.split('\n').filter(line => line.trim() !== '')
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6))
+
+                if (data.chunk) {
+                  aiResponse += data.chunk
+                  // Update the message in real-time
+                  setMessages(prev => {
+                    const newMessages = [...prev]
+                    newMessages[aiMessageIndex] = {
+                      role: 'model',
+                      parts: aiResponse
+                    }
+                    return newMessages
+                  })
+                }
+
+                if (data.done) {
+                  isCorrect = data.isCorrect
+                  // Update with final metadata
+                  setMessages(prev => {
+                    const newMessages = [...prev]
+                    newMessages[aiMessageIndex] = {
+                      role: 'model',
+                      parts: aiResponse,
+                      isCorrect: data.isCorrect
+                    }
+                    return newMessages
+                  })
+
+                  if (data.isCorrect) {
+                    setIsComplete(true)
+                    setShowConfetti(true)
+                    setTimeout(() => {
+                      setShowConfetti(false)
+                      onComplete?.(50)
+                    }, 5000)
+                  }
+                }
+              } catch (e) {
+                console.error('Failed to parse stream chunk:', e)
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      setMessages(prev => {
+        const newMessages = [...prev]
+        newMessages[aiMessageIndex] = {
+          role: 'model',
+          parts: 'Oops! Something went wrong. Let\'s try again.'
+        }
+        return newMessages
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="relative">
+      {/* Enhanced Success Celebration */}
+      <AnimatePresence>
+        {showConfetti && (
+          <motion.div
+            className="fixed inset-0 pointer-events-none z-50 flex flex-col items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {/* Confetti Emojis */}
+            <div className="relative">
+              {['🎉', '🎊', '⭐', '🌟', '✨', '🎈', '🏆', '💯'].map((emoji, i) => (
+                <motion.span
+                  key={i}
+                  className="absolute text-6xl"
+                  initial={{
+                    x: 0,
+                    y: 0,
+                    opacity: 0,
+                    scale: 0,
+                    rotate: 0
+                  }}
+                  animate={{
+                    x: (Math.random() - 0.5) * 400,
+                    y: (Math.random() - 0.5) * 400,
+                    opacity: [0, 1, 1, 0],
+                    scale: [0, 1.5, 1.5, 0],
+                    rotate: (Math.random() - 0.5) * 360
+                  }}
+                  transition={{
+                    duration: 2,
+                    delay: i * 0.1,
+                    ease: "easeOut"
+                  }}
+                >
+                  {emoji}
+                </motion.span>
+              ))}
+            </div>
+
+            {/* Success Message */}
+            <motion.div
+              className="mt-20 bg-gradient-to-r from-green-400 to-blue-500 px-8 py-6 rounded-2xl shadow-2xl"
+              initial={{ scale: 0, rotate: -10 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 260,
+                damping: 20,
+                delay: 0.2
+              }}
+            >
+              <motion.p
+                className="text-white font-bold text-3xl text-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                🏆 Awesome Work! 🏆
+              </motion.p>
+              <motion.p
+                className="text-white/90 text-lg text-center mt-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                +50 XP Earned!
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="max-w-3xl mx-auto py-8 px-4">
+        <div className="space-y-6">
+          {/* Problem Display */}
+          <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
+            <h3 className="text-sm font-bold text-blue-700 mb-2">📝 Problem:</h3>
+            <p className="text-lg text-gray-800">{problem.question}</p>
+            <div className="flex gap-4 mt-2 text-sm text-gray-600">
+              <span>Topic: {problem.topic}</span>
+              <span>• Difficulty: {'⭐'.repeat(problem.difficulty)}</span>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div className="bg-white rounded-lg border border-gray-200 h-96 overflow-y-auto p-4">
+            <div className="space-y-4">
+              {messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {message.role === 'model' && (
+                    <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white mr-2">
+                      🤖
+                    </div>
+                  )}
+
+                  <div
+                    className={`max-w-[75%] px-4 py-3 rounded-lg ${
+                      message.role === 'user'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    <p className="text-sm md:text-base">{message.parts}</p>
+                    {message.isCorrect && (
+                      <p className="text-sm mt-1 font-bold text-green-600">
+                        🎉 Correct!
+                      </p>
+                    )}
+                  </div>
+
+                  {message.role === 'user' && (
+                    <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white ml-2">
+                      👤
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+
+          {/* Input */}
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type your answer or ask a question..."
+              disabled={isLoading || isComplete}
+              className="flex-1 px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500 text-base text-gray-900 bg-white"
+            />
+            <button
+              type="submit"
+              disabled={isLoading || isComplete}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-8 rounded-lg transition-colors"
+            >
+              {isLoading ? 'Sending...' : 'Send'}
+            </button>
+          </form>
+
+          {isComplete && (
+            <motion.div
+              className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl border-2 border-green-200 shadow-lg text-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <motion.p
+                className="text-2xl font-bold text-green-700"
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200 }}
+              >
+                🎉 Amazing work! You earned 50 XP!
+              </motion.p>
+              <motion.p
+                className="text-gray-600 mt-3 text-lg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                Ready for another problem?
+              </motion.p>
+            </motion.div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
