@@ -27,7 +27,20 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
   const [isLoading, setIsLoading] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
+  const [messageCount, setMessageCount] = useState(0)
+  const [limitReached, setLimitReached] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const MESSAGE_LIMIT = 10
+
+  // Load message count from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('messageCount')
+    const count = stored ? parseInt(stored, 10) : 0
+    setMessageCount(count)
+    if (count >= MESSAGE_LIMIT) {
+      setLimitReached(true)
+    }
+  }, [])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -37,7 +50,22 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isLoading) return
+    if (!input.trim() || isLoading || limitReached) return
+
+    // Check message limit
+    if (messageCount >= MESSAGE_LIMIT) {
+      setLimitReached(true)
+      return
+    }
+
+    // Increment and store message count
+    const newCount = messageCount + 1
+    setMessageCount(newCount)
+    localStorage.setItem('messageCount', newCount.toString())
+
+    if (newCount >= MESSAGE_LIMIT) {
+      setLimitReached(true)
+    }
 
     const userMessage: Message = { role: 'user', parts: input }
     setMessages(prev => [...prev, userMessage])
@@ -264,25 +292,52 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
           </div>
 
           {/* Input */}
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your answer or ask a question..."
-              disabled={isLoading || isComplete}
-              className="flex-1 px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500 text-base text-gray-900 bg-white"
-            />
-            <button
-              type="submit"
-              disabled={isLoading || isComplete}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-8 rounded-lg transition-colors"
-            >
-              {isLoading ? 'Sending...' : 'Send'}
-            </button>
-          </form>
+          <div>
+            <form onSubmit={handleSubmit} className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={limitReached ? "Message limit reached" : "Type your answer or ask a question..."}
+                disabled={isLoading || isComplete || limitReached}
+                className="flex-1 px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500 text-base text-gray-900 bg-white"
+              />
+              <button
+                type="submit"
+                disabled={isLoading || isComplete || limitReached}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-8 rounded-lg transition-colors"
+              >
+                {isLoading ? 'Sending...' : 'Send'}
+              </button>
+            </form>
 
-          {isComplete && (
+            {/* Message Counter */}
+            {!limitReached && (
+              <div className="mt-2 text-sm text-gray-600 text-center">
+                {MESSAGE_LIMIT - messageCount} {MESSAGE_LIMIT - messageCount === 1 ? 'message' : 'messages'} remaining in free trial
+              </div>
+            )}
+          </div>
+
+          {limitReached && (
+            <motion.div
+              className="bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-xl border-2 border-orange-300 shadow-lg text-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <p className="text-2xl font-bold text-orange-700 mb-2">
+                🚀 Free Trial Complete!
+              </p>
+              <p className="text-gray-700 text-lg">
+                You've used all 10 free messages. Subscribe to continue learning with unlimited AI tutoring!
+              </p>
+              <button className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transition-all">
+                Subscribe for $9.99/month
+              </button>
+            </motion.div>
+          )}
+
+          {isComplete && !limitReached && (
             <motion.div
               className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl border-2 border-green-200 shadow-lg text-center"
               initial={{ opacity: 0, y: 20 }}
