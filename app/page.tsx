@@ -181,7 +181,7 @@ export default function Home() {
         <div>
           <h1 className="text-5xl font-bold mb-4">🎓 AI Homework Helper</h1>
           <p className="text-xl text-gray-600">
-            Learn math with your friendly Socratic AI tutor
+            Learn math with your friendly Socratic AI tutor!
           </p>
         </div>
 
