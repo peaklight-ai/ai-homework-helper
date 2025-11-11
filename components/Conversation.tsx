@@ -45,10 +45,6 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
     setInput('')
     setIsLoading(true)
 
-    // Add a placeholder message for streaming
-    const aiMessageIndex = messages.length + 1
-    setMessages(prev => [...prev, { role: 'model', parts: '' }])
-
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -60,10 +56,19 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
         })
       })
 
+      if (!response.ok) {
+        throw new Error('Failed to get response')
+      }
+
+      // Add empty AI message that we'll update as stream comes in
+      const aiMessageIndex = messages.length + 1
+      setMessages(prev => [...prev, { role: 'model', parts: '' }])
+
+      // Read the stream
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
-      let aiResponse = ''
-      let isCorrect = false
+      let accumulatedText = ''
+      let streamIsCorrect = false
 
       if (reader) {
         while (true) {
@@ -71,65 +76,61 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
           if (done) break
 
           const chunk = decoder.decode(value, { stream: true })
-          const lines = chunk.split('\n').filter(line => line.trim() !== '')
+          const lines = chunk.split('\n').filter(line => line.trim())
 
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6))
+            try {
+              const data = JSON.parse(line)
 
-                if (data.chunk) {
-                  aiResponse += data.chunk
-                  // Update the message in real-time
-                  setMessages(prev => {
-                    const newMessages = [...prev]
-                    newMessages[aiMessageIndex] = {
-                      role: 'model',
-                      parts: aiResponse
-                    }
-                    return newMessages
-                  })
-                }
-
-                if (data.done) {
-                  isCorrect = data.isCorrect
-                  // Update with final metadata
-                  setMessages(prev => {
-                    const newMessages = [...prev]
-                    newMessages[aiMessageIndex] = {
-                      role: 'model',
-                      parts: aiResponse,
-                      isCorrect: data.isCorrect
-                    }
-                    return newMessages
-                  })
-
-                  if (data.isCorrect) {
-                    setIsComplete(true)
-                    setShowConfetti(true)
-                    setTimeout(() => {
-                      setShowConfetti(false)
-                      onComplete?.(50)
-                    }, 5000)
+              if (data.content) {
+                // Append content to accumulated text
+                accumulatedText += data.content
+                // Update the AI message in place
+                setMessages(prev => {
+                  const newMessages = [...prev]
+                  newMessages[aiMessageIndex] = {
+                    role: 'model',
+                    parts: accumulatedText
                   }
-                }
-              } catch (e) {
-                console.error('Failed to parse stream chunk:', e)
+                  return newMessages
+                })
               }
+
+              if (data.done) {
+                // Stream finished
+                streamIsCorrect = data.isCorrect
+                // Update final message with isCorrect flag
+                setMessages(prev => {
+                  const newMessages = [...prev]
+                  newMessages[aiMessageIndex] = {
+                    role: 'model',
+                    parts: accumulatedText,
+                    isCorrect: streamIsCorrect
+                  }
+                  return newMessages
+                })
+
+                if (streamIsCorrect) {
+                  setIsComplete(true)
+                  setShowConfetti(true)
+                  setTimeout(() => {
+                    setShowConfetti(false)
+                    onComplete?.(50)
+                  }, 5000)
+                }
+              }
+            } catch (e) {
+              console.error('Failed to parse stream chunk:', e)
             }
           }
         }
       }
     } catch (error) {
       console.error('Failed to send message:', error)
-      setMessages(prev => {
-        const newMessages = [...prev]
-        newMessages[aiMessageIndex] = {
-          role: 'model',
-          parts: 'Oops! Something went wrong. Let\'s try again.'
-        }
-        return newMessages
-      })
+      setMessages(prev => [...prev, {
+        role: 'model',
+        parts: 'Oops! Something went wrong. Let\'s try again.'
+      }])
     } finally {
       setIsLoading(false)
     }
