@@ -30,7 +30,7 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
   const [messageCount, setMessageCount] = useState(0)
   const [limitReached, setLimitReached] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const MESSAGE_LIMIT = 10
+  const MESSAGE_LIMIT = 5
 
   // Load message count from localStorage on mount
   useEffect(() => {
@@ -329,7 +329,7 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
                 🚀 Free Trial Complete!
               </p>
               <p className="text-gray-700 text-lg">
-                You've used all 10 free messages. Subscribe to continue learning with unlimited AI tutoring!
+                You've used all 5 free messages. Subscribe to continue learning with unlimited AI tutoring!
               </p>
               <button className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transition-all">
                 Subscribe for $9.99/month
