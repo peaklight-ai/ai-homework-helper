@@ -19,8 +19,7 @@ export interface SocraticResponse {
 
 export async function getSocraticResponse(
   userMessage: string,
-  context: ConversationContext,
-  onStream?: (text: string) => void
+  context: ConversationContext
 ): Promise<SocraticResponse> {
   const systemPrompt = `You are a Socratic tutor for a 10-year-old learning math.
 
@@ -61,8 +60,8 @@ Your role is to guide them to discover the answer through questions and help the
         model: 'gemini-2.5-flash-preview-09-2025', // Using Gemini 2.5 Flash via CometAPI
         messages,
         temperature: 0.7,
-        max_tokens: 200,
-        stream: true
+        max_tokens: 1000, // Increased to allow for reasoning tokens + output
+        stream: false
       })
     })
 
@@ -72,40 +71,11 @@ Your role is to guide them to discover the answer through questions and help the
       throw new Error(`CometAPI error: ${error.error?.message || 'Unknown error'}`)
     }
 
-    // Handle streaming response
-    const reader = response.body?.getReader()
-    const decoder = new TextDecoder()
-    let aiResponse = ''
-
-    if (reader) {
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value, { stream: true })
-        const lines = chunk.split('\n').filter(line => line.trim() !== '')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6)
-            if (data === '[DONE]') break
-
-            try {
-              const parsed = JSON.parse(data)
-              const content = parsed.choices?.[0]?.delta?.content || ''
-              if (content) {
-                aiResponse += content
-                onStream?.(content) // Call streaming callback
-              }
-            } catch (e) {
-              // Skip invalid JSON
-            }
-          }
-        }
-      }
-    }
-
-    console.log('Full AI Response:', aiResponse)
+    // Handle non-streaming response
+    const data = await response.json()
+    console.log('CometAPI full response:', JSON.stringify(data, null, 2))
+    const aiResponse = data.choices[0].message.content
+    console.log('AI Response:', aiResponse)
 
     // Check if the user's answer is correct
     const isCorrect = checkAnswer(userMessage, context.problemAnswer)
