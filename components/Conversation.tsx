@@ -29,15 +29,23 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
   const [showConfetti, setShowConfetti] = useState(false)
   const [messageCount, setMessageCount] = useState(0)
   const [limitReached, setLimitReached] = useState(false)
+  const [isUnlocked, setIsUnlocked] = useState(false)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [showUnlockSuccess, setShowUnlockSuccess] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const MESSAGE_LIMIT = 5
 
-  // Load message count from localStorage on mount
+  // Load message count and unlock status from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem('messageCount')
     const count = stored ? parseInt(stored, 10) : 0
     setMessageCount(count)
-    if (count >= MESSAGE_LIMIT) {
+
+    // Check if unlimited access is unlocked
+    const unlocked = localStorage.getItem('unlimitedAccess') === 'true'
+    setIsUnlocked(unlocked)
+
+    if (count >= MESSAGE_LIMIT && !unlocked) {
       setLimitReached(true)
     }
   }, [])
@@ -52,19 +60,21 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
     e.preventDefault()
     if (!input.trim() || isLoading || limitReached) return
 
-    // Check message limit
-    if (messageCount >= MESSAGE_LIMIT) {
+    // Check message limit (bypass if unlocked)
+    if (messageCount >= MESSAGE_LIMIT && !isUnlocked) {
       setLimitReached(true)
       return
     }
 
-    // Increment and store message count
-    const newCount = messageCount + 1
-    setMessageCount(newCount)
-    localStorage.setItem('messageCount', newCount.toString())
+    // Increment and store message count (only if not unlocked)
+    if (!isUnlocked) {
+      const newCount = messageCount + 1
+      setMessageCount(newCount)
+      localStorage.setItem('messageCount', newCount.toString())
 
-    if (newCount >= MESSAGE_LIMIT) {
-      setLimitReached(true)
+      if (newCount >= MESSAGE_LIMIT) {
+        setLimitReached(true)
+      }
     }
 
     const userMessage: Message = { role: 'user', parts: input }
@@ -161,6 +171,23 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
       }])
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (passwordInput.trim() === 'cynthia') {
+      // Correct password - unlock unlimited access
+      localStorage.setItem('unlimitedAccess', 'true')
+      setIsUnlocked(true)
+      setLimitReached(false)
+      setPasswordInput('')
+      setShowUnlockSuccess(true)
+      // Hide success message after 3 seconds
+      setTimeout(() => setShowUnlockSuccess(false), 3000)
+    } else {
+      // Incorrect password - shake animation handled by CSS
+      setPasswordInput('')
     }
   }
 
@@ -319,6 +346,23 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
             )}
           </div>
 
+          {/* Unlock Success Message */}
+          <AnimatePresence>
+            {showUnlockSuccess && (
+              <motion.div
+                className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl border-2 border-purple-300 shadow-lg text-center mb-4"
+                initial={{ opacity: 0, scale: 0.8, y: -20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              >
+                <p className="text-xl font-bold text-purple-700">
+                  ✨ Unlimited Access Activated ✨
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {limitReached && (
             <motion.div
               className="bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-xl border-2 border-orange-300 shadow-lg text-center"
@@ -334,6 +378,36 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
               <button className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transition-all">
                 Subscribe for $9.99/month
               </button>
+
+              {/* Exclusive Password Unlock */}
+              <div className="mt-6 pt-6 border-t border-orange-200">
+                <form onSubmit={handlePasswordSubmit} className="max-w-sm mx-auto">
+                  <label className="block text-sm font-medium text-gray-600 mb-2 tracking-wide">
+                    Exclusive Access Code
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder="Enter access code"
+                      className="flex-1 px-4 py-2 border-2 border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 placeholder-gray-400 shadow-sm"
+                      style={{
+                        background: 'linear-gradient(to right, #faf5ff, #fdf4ff)',
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all hover:shadow-lg"
+                    >
+                      Unlock
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2 italic">
+                    Have a special access code? Enter it here for unlimited messages.
+                  </p>
+                </form>
+              </div>
             </motion.div>
           )}
 
