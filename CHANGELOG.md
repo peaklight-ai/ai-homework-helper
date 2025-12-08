@@ -12,7 +12,22 @@ All notable changes to AI Homework Helper will be documented in this file.
 - Fix "Try Another Problem" reloading entire page - now uses callback to stay in session
 
 ### New Features
-- **Student Profiles** - Create and manage student profiles with name, grade, avatar
+- **App Renamed to "Valid"** - New branding with PLAI identity
+- **Adventure Hub Design** - Complete kid-friendly UI redesign
+  - Warm cream-to-purple gradient backgrounds (no more gray!)
+  - Large hero avatar with XP progress ring
+  - Floating star/sparkle decorations
+  - Big "Let's Go!" button with rocket animation
+  - Kid-friendly copy ("Ready for an adventure?")
+- **Student Picker** - "Who's Playing Today?" character selection screen
+  - Students select from teacher-created profiles (no self-registration)
+  - Large avatar cards with grade badges
+  - Switch Student button for shared classroom devices
+- **Teacher-Managed Student Profiles** - Teachers add students via dashboard
+  - Add Student form with name and grade selection
+  - Delete student with confirmation
+  - Students cannot create their own profiles
+- **Student Profiles** - Profile system with avatars
   - Uses Dexie.js (IndexedDB) for persistent browser storage
   - DiceBear API for fun, kid-friendly avatars (light skin tones)
   - Profile switcher for siblings/classmates sharing a device
