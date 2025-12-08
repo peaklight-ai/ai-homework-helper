@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import confetti from 'canvas-confetti'
 import { MathProblem } from '@/lib/sampleProblems'
 
 interface Message {
@@ -14,9 +15,10 @@ interface ConversationProps {
   problem: MathProblem
   childName?: string
   onComplete?: (xpEarned: number) => void
+  onNewProblem?: () => void
 }
 
-export function Conversation({ problem, childName = 'Student', onComplete }: ConversationProps) {
+export function Conversation({ problem, childName = 'Student', onComplete, onNewProblem }: ConversationProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'model',
@@ -151,6 +153,19 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
                 if (streamIsCorrect) {
                   setIsComplete(true)
                   setShowConfetti(true)
+
+                  // Fire real confetti!
+                  const fireConfetti = () => {
+                    confetti({
+                      particleCount: 100,
+                      spread: 70,
+                      origin: { y: 0.6 }
+                    })
+                  }
+                  fireConfetti()
+                  setTimeout(fireConfetti, 250)
+                  setTimeout(fireConfetti, 500)
+
                   setTimeout(() => {
                     setShowConfetti(false)
                     onComplete?.(50)
@@ -270,13 +285,19 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
         <div className="space-y-6">
           {/* Problem Display */}
           <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
-            <h3 className="text-sm font-bold text-blue-700 mb-2">📝 Problem:</h3>
+            <h3 className="text-sm font-bold text-blue-700 mb-2">Problem:</h3>
             <p className="text-lg text-gray-800">{problem.question}</p>
             <div className="flex gap-4 mt-2 text-sm text-gray-600">
-              <span>Topic: {problem.topic}</span>
-              <span>• Difficulty: {'⭐'.repeat(problem.difficulty)}</span>
+              <span>Difficulty: {'*'.repeat(problem.difficulty)}</span>
             </div>
           </div>
+
+          {/* Dev Mode Indicator */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-3 py-1 rounded text-xs text-center">
+              DEV MODE - Using Ollama (llama3.1) | V2 Code Active
+            </div>
+          )}
 
           {/* Messages */}
           <div className="bg-white rounded-lg border border-gray-200 h-96 overflow-y-auto p-4">
@@ -434,6 +455,15 @@ export function Conversation({ problem, childName = 'Student', onComplete }: Con
               >
                 Ready for another problem?
               </motion.p>
+              <motion.button
+                className="mt-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transition-all"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7 }}
+                onClick={() => onNewProblem?.()}
+              >
+                Try Another Problem
+              </motion.button>
             </motion.div>
           )}
         </div>
