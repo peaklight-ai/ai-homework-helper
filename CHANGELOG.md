@@ -2,7 +2,7 @@
 
 All notable changes to AI Homework Helper will be documented in this file.
 
-## [3.0.0] - 2026-01-18
+## [2.1.0] - 2026-01-18
 
 ### New Features
 
@@ -172,7 +172,7 @@ All notable changes to AI Homework Helper will be documented in this file.
 - Custom question upload
 - Expanded math domains
 
-## Version 3.0 (Complete)
+## Version 2.1 (Complete)
 **Database Integration + OCR**
 
 - ✅ **Supabase Integration** - Cloud database with auth and RLS
@@ -182,7 +182,7 @@ All notable changes to AI Homework Helper will be documented in this file.
 - ✅ **Image Upload (OCR)** - Tesseract.js to extract problems from homework photos
 - ✅ **Progress Sync** - XP and progress synced to cloud
 
-## Version 4.0 (Vision)
+## Version 3.0 (Vision)
 - **Multi-language** - French version for French system schools
 - **Placement Test** - Assess student level, generate personalized profile
 - **Learning Specialist Tools** - Support for orthopédagogues
@@ -201,7 +201,7 @@ All notable changes to AI Homework Helper will be documented in this file.
 | [DiceBear](https://www.dicebear.com/) | Fun avatar generation | ✅ V2.0 |
 | [canvas-confetti](https://github.com/catdad/canvas-confetti) | Celebration animations | ✅ V2.0 |
 | [react-circular-progressbar](https://github.com/kevinsqi/react-circular-progressbar) | XP level progress ring | ✅ V2.0 |
-| [Tesseract.js](https://github.com/naptha/tesseract.js) | OCR for homework photos | ✅ V3.0 |
-| [@supabase/supabase-js](https://github.com/supabase/supabase-js) | Supabase client | ✅ V3.0 |
-| [@supabase/ssr](https://github.com/supabase/ssr) | Supabase SSR utilities | ✅ V3.0 |
-| [MathLive](https://github.com/arnog/mathlive) | Math input keyboard | V4 Roadmap |
+| [Tesseract.js](https://github.com/naptha/tesseract.js) | OCR for homework photos | ✅ V2.1 |
+| [@supabase/supabase-js](https://github.com/supabase/supabase-js) | Supabase client | ✅ V2.1 |
+| [@supabase/ssr](https://github.com/supabase/ssr) | Supabase SSR utilities | ✅ V2.1 |
+| [MathLive](https://github.com/arnog/mathlive) | Math input keyboard | V3 Roadmap |

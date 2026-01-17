@@ -1,4 +1,4 @@
-# V3 Testing & Deployment Guide
+# V2 Testing & Deployment Guide
 
 ## Prerequisites
 

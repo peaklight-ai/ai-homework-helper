@@ -1,8 +1,8 @@
-# Valid V3.0 - Release Notes
+# Valid V2.0 - Release Notes
 
 ## Overview
 
-V3.0 transforms Valid from a browser-only app into a cloud-connected platform with real authentication, per-student customization, and homework photo scanning.
+V2.0 transforms Valid from a browser-only app into a cloud-connected platform with real authentication, per-student customization, and homework photo scanning.
 
 ---
 
@@ -120,9 +120,9 @@ V3.0 transforms Valid from a browser-only app into a cloud-connected platform wi
 
 ---
 
-## Migration from V2
+## Migration from V1
 
-V3 uses Supabase instead of browser-only IndexedDB. Existing V2 data remains in the browser but is separate from the new cloud system.
+V2 uses Supabase instead of browser-only IndexedDB. Existing V1 data remains in the browser but is separate from the new cloud system.
 
 **For existing users:**
 - Teachers need to create a new account
@@ -131,7 +131,7 @@ V3 uses Supabase instead of browser-only IndexedDB. Existing V2 data remains in 
 
 ---
 
-## What's Next (V4 Roadmap)
+## What's Next (V3 Roadmap)
 
 - Multi-language support (French)
 - Placement test for automatic level detection
