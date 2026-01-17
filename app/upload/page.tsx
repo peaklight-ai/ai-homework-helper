@@ -277,8 +277,7 @@ export default function UploadPage() {
           {customProblem && (
             <Conversation
               problem={customProblem}
-              studentName={student.name}
-              studentGrade={student.grade}
+              childName={student.name}
               onComplete={handleComplete}
               key={customProblem.question}
             />
