@@ -1,190 +1,287 @@
 'use client'
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { QuestionForm } from '@/components/QuestionForm'
-import { db, CustomProblem, MathDomain } from '@/lib/db'
-import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import { HomeworkUpload } from '@/components/HomeworkUpload'
+import { Conversation } from '@/components/Conversation'
+import { Avatar } from '@/components/Avatar'
+import { CircularProgressbar, buildStyles } from 'react-circular-progressbar'
+import 'react-circular-progressbar/dist/styles.css'
 
-const DOMAIN_LABELS: Record<MathDomain, string> = {
-  'number-operations': 'Number & Operations',
-  'algebraic-thinking': 'Algebraic Thinking',
-  'geometry': 'Geometry',
-  'measurement': 'Measurement',
-  'data-handling': 'Data Handling',
-  'problem-solving': 'Problem Solving',
+// =============================================================================
+// UPLOAD PAGE - Homework Photo Upload & Solve
+// =============================================================================
+// Students can take/upload photos of homework problems
+// OCR extracts the problem, then they solve it with AI guidance
+// =============================================================================
+
+interface StudentData {
+  id: string
+  name: string
+  grade: number
+  avatarSeed: string
+  loginCode: string
 }
 
+interface ProgressData {
+  totalXp: number
+  level: number
+  currentStreak: number
+  longestStreak: number
+  totalQuestions: number
+  correctAnswers: number
+}
+
+type PageView = 'upload' | 'solve'
+
 export default function UploadPage() {
-  const [showForm, setShowForm] = useState(true)
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
+  const [student, setStudent] = useState<StudentData | null>(null)
+  const [progress, setProgress] = useState<ProgressData | null>(null)
+  const [view, setView] = useState<PageView>('upload')
+  const [xpGoal, setXpGoal] = useState(100)
+  const [showXpGain, setShowXpGain] = useState(false)
+  const [xpTotal, setXpTotal] = useState(0)
 
-  // Get all custom problems
-  const problems = useLiveQuery(() => db.customProblems.toArray())
+  // Custom problem from OCR
+  const [customProblem, setCustomProblem] = useState<{
+    question: string
+    answer: string
+    hint: string
+    domain: string
+    difficulty: number
+    gradeRange: [number, number]
+    topic: string
+  } | null>(null)
 
-  const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this problem?')) {
-      await db.customProblems.delete(id)
+  // Check for logged-in student on mount
+  useEffect(() => {
+    const loadSession = async () => {
+      setIsLoading(true)
+      try {
+        const savedStudentId = localStorage.getItem('studentId')
+        const savedStudentData = localStorage.getItem('studentData')
+
+        if (!savedStudentId || !savedStudentData) {
+          // Not logged in, redirect to main page
+          router.push('/')
+          return
+        }
+
+        const studentData = JSON.parse(savedStudentData)
+        setStudent(studentData)
+
+        // Fetch progress
+        const response = await fetch(`/api/progress?studentId=${savedStudentId}`)
+        if (response.ok) {
+          const data = await response.json()
+          setProgress(data.progress)
+          setXpTotal(data.progress.totalXp)
+        }
+
+        // Load XP goal
+        const savedGoal = localStorage.getItem('xpGoal')
+        if (savedGoal) {
+          setXpGoal(parseInt(savedGoal, 10))
+        }
+      } catch (error) {
+        console.error('Error loading session:', error)
+        router.push('/')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadSession()
+  }, [router])
+
+  const handleProblemExtracted = (question: string, expectedAnswer?: number) => {
+    // Create a custom problem from the extracted text
+    setCustomProblem({
+      question,
+      answer: expectedAnswer?.toString() || '',
+      hint: 'Try breaking the problem into smaller steps.',
+      domain: 'Homework',
+      difficulty: 2,
+      gradeRange: [1, 6],
+      topic: 'homework'
+    })
+    setView('solve')
+  }
+
+  const handleComplete = async (xpEarned: number) => {
+    setXpTotal(prev => prev + xpEarned)
+    setShowXpGain(true)
+    setTimeout(() => setShowXpGain(false), 2000)
+
+    if (student?.id) {
+      try {
+        const response = await fetch('/api/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentId: student.id,
+            action: 'recordAnswer',
+            isCorrect: true
+          })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.progress) {
+            setProgress(data.progress)
+          }
+        }
+      } catch (error) {
+        console.error('Error updating progress:', error)
+      }
     }
   }
 
+  const handleNewProblem = () => {
+    // Go back to upload for another problem
+    setCustomProblem(null)
+    setView('upload')
+  }
+
+  const handleCancel = () => {
+    router.push('/')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white/90 backdrop-blur-lg rounded-3xl p-8 shadow-2xl"
+        >
+          <div className="text-6xl animate-bounce mb-4">📚</div>
+          <p className="text-gray-600 text-lg">Loading...</p>
+        </motion.div>
+      </div>
+    )
+  }
+
+  if (!student) {
+    return null // Will redirect in useEffect
+  }
+
+  // Upload View
+  if (view === 'upload') {
+    return (
+      <HomeworkUpload
+        onProblemExtracted={handleProblemExtracted}
+        onCancel={handleCancel}
+      />
+    )
+  }
+
+  // Solve View - Similar to main page but with custom problem
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 p-4">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-4">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">Custom Problems</h1>
-          <div className="flex gap-3">
-            <Link
-              href="/teacher"
-              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              Teacher Dashboard
-            </Link>
-            <Link
-              href="/"
-              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              Back to Home
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Left: Form */}
-          <div>
-            {showForm ? (
-              <QuestionForm onComplete={() => {}} />
-            ) : (
-              <button
-                onClick={() => setShowForm(true)}
-                className="w-full py-8 border-2 border-dashed border-purple-300 rounded-2xl text-purple-500 hover:border-purple-500 hover:text-purple-600 transition-colors"
-              >
-                + Add New Problem
-              </button>
-            )}
-          </div>
-
-          {/* Right: Problem List */}
-          <div className="bg-white rounded-2xl shadow-xl p-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
-              Your Problems ({problems?.length || 0})
-            </h2>
-
-            {!problems || problems.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p className="mb-2">No custom problems yet</p>
-                <p className="text-sm">Add your first problem using the form</p>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                {problems.map((problem) => (
-                  <motion.div
-                    key={problem.id}
-                    className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-gray-800 font-medium truncate">
-                          {problem.question}
-                        </p>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
-                            {DOMAIN_LABELS[problem.domain]}
-                          </span>
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                            Grades {problem.gradeRange[0]}-{problem.gradeRange[1]}
-                          </span>
-                          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">
-                            {'*'.repeat(problem.difficulty)}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleDelete(problem.id!)}
-                        className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                        title="Delete"
-                      >
-                        X
-                      </button>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-gray-200">
-                      <p className="text-sm text-gray-600">
-                        Answer: <span className="font-medium text-green-600">{problem.answer}</span>
-                      </p>
-                      {problem.hint && (
-                        <p className="text-sm text-gray-500 mt-1">
-                          Hint: {problem.hint}
-                        </p>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
+      <header className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="bg-white/90 backdrop-blur-lg rounded-2xl px-4 py-2 shadow-xl flex items-center gap-3"
+          >
+            <Avatar seed={student.avatarSeed} size={40} />
+            <div>
+              <p className="font-bold text-gray-800">{student.name}</p>
+              <p className="text-sm text-gray-600">Grade {student.grade}</p>
+            </div>
+          </motion.div>
         </div>
 
-        {/* Export/Import Section */}
-        <div className="mt-6 bg-white rounded-2xl shadow-xl p-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Backup Problems</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Export your problems to a file for safekeeping, or import problems from a backup.
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={async () => {
-                const probs = await db.customProblems.toArray()
-                const blob = new Blob([JSON.stringify(probs, null, 2)], { type: 'application/json' })
-                const url = URL.createObjectURL(blob)
-                const a = document.createElement('a')
-                a.href = url
-                a.download = `custom-problems-${new Date().toISOString().split('T')[0]}.json`
-                a.click()
-                URL.revokeObjectURL(url)
-              }}
-              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
-            >
-              Export Problems
-            </button>
-            <label className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors cursor-pointer">
-              Import Problems
-              <input
-                type="file"
-                accept=".json"
-                className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-
-                  const reader = new FileReader()
-                  reader.onload = async (event) => {
-                    try {
-                      const probs = JSON.parse(event.target?.result as string) as CustomProblem[]
-                      // Remove IDs so they get new ones
-                      const newProbs = probs.map(({ id, ...rest }) => ({
-                        ...rest,
-                        createdAt: new Date(rest.createdAt)
-                      }))
-                      await db.customProblems.bulkAdd(newProbs as CustomProblem[])
-                      alert(`Imported ${newProbs.length} problems!`)
-                    } catch (error) {
-                      console.error('Import failed:', error)
-                      alert('Failed to import. Check file format.')
-                    }
-                  }
-                  reader.readAsText(file)
-                  e.target.value = '' // Reset input
-                }}
+        <div className="flex items-center gap-4">
+          {/* XP Progress */}
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="bg-white/90 backdrop-blur-lg rounded-2xl px-4 py-2 shadow-xl flex items-center gap-3"
+          >
+            <div className="w-12 h-12">
+              <CircularProgressbar
+                value={Math.min((xpTotal / xpGoal) * 100, 100)}
+                text={`${Math.round((xpTotal / xpGoal) * 100)}%`}
+                styles={buildStyles({
+                  textSize: '28px',
+                  pathColor: xpTotal >= xpGoal ? '#22c55e' : '#8b5cf6',
+                  textColor: '#374151',
+                  trailColor: '#e5e7eb'
+                })}
               />
-            </label>
-          </div>
+            </div>
+            <div className="text-right">
+              <p className="font-bold text-gray-800">{xpTotal} XP</p>
+              <p className="text-xs text-gray-600">Goal: {xpGoal}</p>
+            </div>
+          </motion.div>
+
+          {/* Upload Another Button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleNewProblem}
+            className="bg-white/90 backdrop-blur-lg rounded-2xl px-4 py-3 shadow-xl text-gray-800 font-semibold"
+          >
+            📸 New Photo
+          </motion.button>
+
+          {/* Back Button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleCancel}
+            className="bg-white/90 backdrop-blur-lg rounded-2xl px-4 py-3 shadow-xl text-gray-800 font-semibold"
+          >
+            ← Home
+          </motion.button>
         </div>
-      </div>
+      </header>
+
+      {/* XP Gain Animation */}
+      <AnimatePresence>
+        {showXpGain && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-24 right-8 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold py-3 px-6 rounded-xl shadow-xl z-50"
+          >
+            +50 XP! 🌟
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Conversation Area */}
+      <main className="max-w-4xl mx-auto">
+        <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden">
+          {/* Problem Header */}
+          <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-white p-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📝</span>
+              <div>
+                <h2 className="font-bold">Your Homework Problem</h2>
+                <p className="text-sm text-white/80">Uploaded from photo</p>
+              </div>
+            </div>
+          </div>
+
+          {customProblem && (
+            <Conversation
+              problem={customProblem}
+              studentName={student.name}
+              studentGrade={student.grade}
+              onComplete={handleComplete}
+              key={customProblem.question}
+            />
+          )}
+        </div>
+      </main>
     </div>
   )
 }

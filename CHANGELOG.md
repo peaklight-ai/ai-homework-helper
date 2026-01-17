@@ -2,6 +2,80 @@
 
 All notable changes to AI Homework Helper will be documented in this file.
 
+## [3.0.0] - 2026-01-18
+
+### New Features
+
+- **Supabase Integration** - Full cloud database with Row Level Security
+  - Real-time data sync across devices
+  - Secure authentication with email/password for teachers
+  - Student login with simple 6-digit codes (no email required)
+  - PostgreSQL database for persistent storage
+
+- **Teacher Authentication** - Secure teacher accounts
+  - Email/password signup and login
+  - Protected routes (teacher dashboard, upload)
+  - Session persistence across browser refreshes
+
+- **Student Login System** - Kid-friendly authentication
+  - 6-character alphanumeric codes (easy to type, hard to guess)
+  - No email required for students
+  - Session saved in browser for quick return
+  - Teacher-generated codes displayed in dashboard
+
+- **Per-Student Settings** - Customizable learning experience
+  - **Topic Selection**: Teachers choose which topics each student can practice
+    - Addition, Subtraction, Multiplication, Division
+  - **Difficulty Levels**: 1-5 scale per student
+  - Problems filtered based on student's allowed topics and difficulty
+  - Settings modal in teacher dashboard
+
+- **Homework Photo Upload (OCR)** - Upload and solve homework problems
+  - Camera capture for taking photos of homework
+  - File picker for uploading existing images
+  - Tesseract.js for extracting text from images
+  - Automatic math expression detection
+  - Edit extracted text before solving
+  - AI guides student through uploaded problems
+
+- **Progress Sync** - Cloud-synced student progress
+  - XP, streaks, and accuracy sync to Supabase
+  - Progress persists across devices
+  - Teacher dashboard shows real-time progress
+
+### Technical Changes
+
+- Add Supabase client library (`@supabase/supabase-js`, `@supabase/ssr`)
+- Add Tesseract.js for OCR functionality
+- Create `/lib/supabase.ts` with database types and helper functions
+- Create `/lib/ocr.ts` with OCR processing and math text cleaning
+- Create API routes:
+  - `/api/teachers` - Teacher record creation
+  - `/api/students` - Student CRUD operations
+  - `/api/progress` - Progress tracking
+  - `/api/settings` - Student settings management
+  - `/api/auth/student` - Student login with codes
+- Add middleware for route protection
+- Add SupabaseProvider context for auth state
+- New components:
+  - `StudentLogin` - Kid-friendly login UI
+  - `HomeworkUpload` - Photo upload with OCR
+  - `SupabaseProvider` - Auth context provider
+
+### Database Schema
+
+```sql
+-- Tables added in V3:
+-- teachers (id, email, name)
+-- students (id, teacher_id, name, grade, avatar_seed, login_code)
+-- progress (student_id, total_xp, level, streaks, questions, accuracy)
+-- student_settings (student_id, allowed_topics[], difficulty_level)
+-- custom_problems (teacher_id, question, answer, difficulty, hint)
+-- homework_uploads (student_id, image_url, extracted_text, status)
+```
+
+---
+
 ## [2.0.0] - 2025-12-08
 
 ### Bug Fixes
@@ -92,20 +166,21 @@ All notable changes to AI Homework Helper will be documented in this file.
 
 # Roadmap
 
-## Version 2.0 (Current Focus)
+## Version 2.0 (Complete)
 - Bug fixes from demo feedback
 - Student profiles (browser-based)
 - Custom question upload
 - Expanded math domains
 
-## Version 3.0 (Future)
-**Database Integration**
+## Version 3.0 (Complete)
+**Database Integration + OCR**
 
-- **Server Database** - Supabase or Vercel Postgres for cross-device sync
-- **Teacher Dashboard** - View student progress, assign problems
-- **Parent Portal** - Monitor child's learning
-- **Image Upload (OCR)** - Tesseract.js to extract problems from homework photos
-- **Voice Input** - Record voice messages for younger students
+- ✅ **Supabase Integration** - Cloud database with auth and RLS
+- ✅ **Teacher Authentication** - Email/password login for teachers
+- ✅ **Student Login Codes** - Simple 6-digit codes for kids
+- ✅ **Per-Student Settings** - Topic/difficulty selection per student
+- ✅ **Image Upload (OCR)** - Tesseract.js to extract problems from homework photos
+- ✅ **Progress Sync** - XP and progress synced to cloud
 
 ## Version 4.0 (Vision)
 - **Multi-language** - French version for French system schools
@@ -126,5 +201,7 @@ All notable changes to AI Homework Helper will be documented in this file.
 | [DiceBear](https://www.dicebear.com/) | Fun avatar generation | ✅ V2.0 |
 | [canvas-confetti](https://github.com/catdad/canvas-confetti) | Celebration animations | ✅ V2.0 |
 | [react-circular-progressbar](https://github.com/kevinsqi/react-circular-progressbar) | XP level progress ring | ✅ V2.0 |
-| [Tesseract.js](https://github.com/naptha/tesseract.js) | OCR for homework photos | V3 Roadmap |
-| [MathLive](https://github.com/arnog/mathlive) | Math input keyboard | V3 Roadmap |
+| [Tesseract.js](https://github.com/naptha/tesseract.js) | OCR for homework photos | ✅ V3.0 |
+| [@supabase/supabase-js](https://github.com/supabase/supabase-js) | Supabase client | ✅ V3.0 |
+| [@supabase/ssr](https://github.com/supabase/ssr) | Supabase SSR utilities | ✅ V3.0 |
+| [MathLive](https://github.com/arnog/mathlive) | Math input keyboard | V4 Roadmap |

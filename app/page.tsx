@@ -3,106 +3,216 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { useLiveQuery } from 'dexie-react-hooks'
 import { Conversation } from '@/components/Conversation'
 import { Avatar } from '@/components/Avatar'
-import { getRandomProblem } from '@/lib/sampleProblems'
-import { db, getActiveProfile, setActiveProfile, addXp, recordAnswer, StudentProfile, getProfileProgress, StudentProgress } from '@/lib/db'
+import { StudentLogin } from '@/components/StudentLogin'
+import { getRandomProblem, getProblemsByGrade, sampleProblems, MathProblem } from '@/lib/sampleProblems'
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar'
 import 'react-circular-progressbar/dist/styles.css'
 
-// ============================================================================
-// ADVENTURE HUB PALETTE - Kid-Friendly Theme
-// ============================================================================
-// Background:     Warm cream to soft purple gradient
-// Primary:        #BB8CFC (Vapor Violet - PLAI)
-// XP/Rewards:     #FACC15 (Golden Yellow)
-// Success:        #22C55E (Bright Green)
-// Accent:         #C3FE4C (Cyber Lime - PLAI)
-// Text:           #1F2937 (warm dark gray)
-// ============================================================================
+// =============================================================================
+// V3 MAIN PAGE - SUPABASE INTEGRATED
+// =============================================================================
+
+interface StudentData {
+  id: string
+  name: string
+  grade: number
+  avatarSeed: string
+  loginCode: string
+}
+
+interface ProgressData {
+  totalXp: number
+  level: number
+  currentStreak: number
+  longestStreak: number
+  totalQuestions: number
+  correctAnswers: number
+}
+
+interface SettingsData {
+  allowedTopics: string[]
+  difficultyLevel: number
+}
 
 export default function Home() {
   const [started, setStarted] = useState(false)
-  const [problem, setProblem] = useState(() => getRandomProblem(1))
+  const [problem, setProblem] = useState<MathProblem>(() => getRandomProblem(1))
   const [xpTotal, setXpTotal] = useState(0)
-  const [previousXp, setPreviousXp] = useState(0)
   const [showXpGain, setShowXpGain] = useState(false)
-  const [activeProfile, setActiveProfileState] = useState<StudentProfile | null>(null)
-  const [activeProgress, setActiveProgress] = useState<StudentProgress | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Get all student profiles (teacher-managed)
-  const allProfiles = useLiveQuery(() => db.profiles.toArray())
+  // Student session (from Supabase via login code)
+  const [student, setStudent] = useState<StudentData | null>(null)
+  const [progress, setProgress] = useState<ProgressData | null>(null)
+  const [settings, setSettings] = useState<SettingsData | null>(null)
 
-  // Get class settings for XP goal
-  const settings = useLiveQuery(() => db.settings.toCollection().first())
-  const xpGoal = settings?.xpGoal || 100
+  // XP Goal (from localStorage, synced with teacher dashboard)
+  const [xpGoal, setXpGoal] = useState(100)
 
-  // Check for active profile on mount
+  // Check for existing session on mount
   useEffect(() => {
-    checkProfile()
+    const loadSession = async () => {
+      setIsLoading(true)
+      try {
+        const savedStudentId = localStorage.getItem('studentId')
+        const savedStudentName = localStorage.getItem('studentName')
+
+        if (savedStudentId && savedStudentName) {
+          // Fetch fresh data from API
+          const response = await fetch(`/api/progress?studentId=${savedStudentId}`)
+          if (response.ok) {
+            const data = await response.json()
+
+            // Restore student data from localStorage
+            const savedStudent = localStorage.getItem('studentData')
+            if (savedStudent) {
+              const studentData = JSON.parse(savedStudent)
+              setStudent(studentData)
+              setProgress(data.progress)
+              setXpTotal(data.progress.totalXp)
+
+              // Fetch settings
+              const settingsResponse = await fetch(`/api/settings?studentId=${savedStudentId}`)
+              if (settingsResponse.ok) {
+                const settingsData = await settingsResponse.json()
+                setSettings(settingsData.settings)
+              }
+            }
+          } else {
+            // Session invalid, clear it
+            localStorage.removeItem('studentId')
+            localStorage.removeItem('studentName')
+            localStorage.removeItem('studentData')
+          }
+        }
+
+        // Load XP goal
+        const savedGoal = localStorage.getItem('xpGoal')
+        if (savedGoal) {
+          setXpGoal(parseInt(savedGoal, 10))
+        }
+      } catch (error) {
+        console.error('Error loading session:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadSession()
   }, [])
 
-  const checkProfile = async () => {
-    setIsLoading(true)
-    try {
-      const profile = await getActiveProfile()
-      if (profile) {
-        setActiveProfileState(profile)
-        const progress = await getProfileProgress(profile.id!)
-        if (progress) {
-          setActiveProgress(progress)
-          setXpTotal(progress.totalXp)
-          setPreviousXp(progress.totalXp)
-        }
-      }
-    } catch (error) {
-      console.error('Error loading profile:', error)
-    } finally {
-      setIsLoading(false)
-    }
+  const handleLogin = (studentData: StudentData, progressData: ProgressData, settingsData: SettingsData) => {
+    setStudent(studentData)
+    setProgress(progressData)
+    setSettings(settingsData)
+    setXpTotal(progressData.totalXp)
+
+    // Save to localStorage for persistence
+    localStorage.setItem('studentId', studentData.id)
+    localStorage.setItem('studentName', studentData.name)
+    localStorage.setItem('studentData', JSON.stringify(studentData))
   }
 
-  const handleSelectStudent = async (profile: StudentProfile) => {
-    await setActiveProfile(profile.id!)
-    setActiveProfileState(profile)
-    const progress = await getProfileProgress(profile.id!)
-    if (progress) {
-      setActiveProgress(progress)
-      setXpTotal(progress.totalXp)
-      setPreviousXp(progress.totalXp)
-    }
-  }
-
-  const handleSwitchStudent = () => {
-    setActiveProfileState(null)
-    setActiveProgress(null)
-    localStorage.removeItem('activeProfileId')
+  const handleLogout = () => {
+    setStudent(null)
+    setProgress(null)
+    setSettings(null)
+    setXpTotal(0)
+    setStarted(false)
+    localStorage.removeItem('studentId')
+    localStorage.removeItem('studentName')
+    localStorage.removeItem('studentData')
   }
 
   const handleComplete = async (xpEarned: number) => {
-    setPreviousXp(xpTotal)
     setXpTotal(prev => prev + xpEarned)
     setShowXpGain(true)
     setTimeout(() => setShowXpGain(false), 2000)
 
-    if (activeProfile?.id) {
-      await addXp(activeProfile.id, xpEarned)
-      await recordAnswer(activeProfile.id, true)
-      // Refresh progress
-      const progress = await getProfileProgress(activeProfile.id)
-      if (progress) setActiveProgress(progress)
+    if (student?.id) {
+      try {
+        // Update progress in Supabase
+        const response = await fetch('/api/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentId: student.id,
+            action: 'recordAnswer',
+            isCorrect: true
+          })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.progress) {
+            setProgress(data.progress)
+          }
+        }
+      } catch (error) {
+        console.error('Error updating progress:', error)
+      }
     }
   }
 
   const handleNewProblem = () => {
-    const difficulty = activeProfile?.grade ? Math.min(activeProfile.grade, 5) as 1 | 2 : 1
-    setProblem(getRandomProblem(difficulty))
+    if (!student || !settings) {
+      setProblem(getRandomProblem(1))
+      setStarted(true)
+      return
+    }
+
+    // Filter problems by student's settings
+    const { allowedTopics, difficultyLevel } = settings
+    const grade = student.grade
+
+    // Filter problems by grade, difficulty, and allowed topics
+    let filtered = sampleProblems.filter(p => {
+      // Check grade range
+      if (grade < p.gradeRange[0] || grade > p.gradeRange[1]) return false
+      // Check difficulty
+      if (p.difficulty > difficultyLevel) return false
+      // Check topic (map problem topic to our topic categories)
+      const topicMap: Record<string, string> = {
+        'addition': 'addition',
+        'subtraction': 'subtraction',
+        'multiplication': 'multiplication',
+        'division': 'division',
+        'patterns': 'addition', // algebraic thinking uses addition
+        'equations': 'multiplication', // equations can use any
+        'shapes': 'multiplication', // geometry often uses multiplication
+        'perimeter': 'addition',
+        'area': 'multiplication',
+        'time': 'subtraction',
+        'length': 'division',
+        'weight': 'multiplication',
+        'data-interpretation': 'addition',
+        'graphs': 'addition',
+        'multi-step': 'addition',
+        'reasoning': 'division',
+        'fractions': 'division'
+      }
+      const mappedTopic = topicMap[p.topic] || 'addition'
+      return allowedTopics.includes(mappedTopic)
+    })
+
+    if (filtered.length === 0) {
+      // Fallback to grade-appropriate problems
+      filtered = getProblemsByGrade(grade).filter(p => p.difficulty <= difficultyLevel)
+    }
+
+    if (filtered.length === 0) {
+      // Ultimate fallback
+      filtered = sampleProblems
+    }
+
+    const randomIndex = Math.floor(Math.random() * filtered.length)
+    setProblem(filtered[randomIndex])
     setStarted(true)
   }
 
-  // Loading state with fun animation
+  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #FEF3E2 0%, #F3E8FF 50%, #E0E7FF 100%)' }}>
@@ -125,136 +235,12 @@ export default function Home() {
     )
   }
 
-  // ========================================
-  // STUDENT PICKER - "Who's Playing Today?"
-  // ========================================
-  if (!activeProfile) {
-    return (
-      <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #FEF3E2 0%, #F3E8FF 50%, #E0E7FF 100%)' }}>
-        {/* Teacher Access - subtle */}
-        <div className="absolute top-4 right-4">
-          <Link
-            href="/teacher"
-            className="text-sm px-3 py-1 rounded-full transition-all hover:scale-105"
-            style={{ backgroundColor: 'rgba(187, 140, 252, 0.2)', color: '#7C3AED' }}
-          >
-            Teacher →
-          </Link>
-        </div>
-
-        <div className="flex-1 flex items-center justify-center p-6">
-          <motion.div
-            className="w-full max-w-lg"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            {/* Logo & Title */}
-            <div className="text-center mb-8">
-              <motion.div
-                className="inline-block mb-4"
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <span className="text-6xl">🚀</span>
-              </motion.div>
-              <h1 className="text-4xl font-bold mb-2" style={{ color: '#1F2937' }}>
-                Welcome to <span style={{ color: '#BB8CFC' }}>Valid</span>!
-              </h1>
-              <p className="text-xl" style={{ color: '#6B7280' }}>
-                Who's playing today?
-              </p>
-            </div>
-
-            {/* Student Cards */}
-            {!allProfiles || allProfiles.length === 0 ? (
-              <motion.div
-                className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 text-center shadow-xl"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-              >
-                <div className="text-6xl mb-4">📚</div>
-                <h2 className="text-xl font-bold mb-2" style={{ color: '#1F2937' }}>
-                  No students yet!
-                </h2>
-                <p className="mb-4" style={{ color: '#6B7280' }}>
-                  Ask your teacher to add you to the class.
-                </p>
-                <Link
-                  href="/teacher"
-                  className="inline-block px-6 py-3 rounded-xl font-bold transition-all hover:scale-105"
-                  style={{ backgroundColor: '#BB8CFC', color: 'white' }}
-                >
-                  Go to Teacher Dashboard
-                </Link>
-              </motion.div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                {allProfiles.map((profile, index) => (
-                  <motion.button
-                    key={profile.id}
-                    onClick={() => handleSelectStudent(profile)}
-                    className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-all"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ scale: 1.05, y: -5 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div className="relative inline-block mb-3">
-                      <Avatar seed={profile.avatarSeed} size={80} />
-                      <motion.div
-                        className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                        style={{ backgroundColor: '#FACC15', color: '#1F2937' }}
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        {profile.grade}
-                      </motion.div>
-                    </div>
-                    <h3 className="text-lg font-bold" style={{ color: '#1F2937' }}>
-                      {profile.name}
-                    </h3>
-                    <p className="text-sm" style={{ color: '#6B7280' }}>
-                      Grade {profile.grade}
-                    </p>
-                  </motion.button>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        </div>
-
-        {/* Fun floating elements */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          {['⭐', '🌟', '✨', '💫'].map((emoji, i) => (
-            <motion.div
-              key={i}
-              className="absolute text-2xl opacity-30"
-              style={{
-                left: `${20 + i * 20}%`,
-                top: `${10 + i * 15}%`,
-              }}
-              animate={{
-                y: [0, -20, 0],
-                rotate: [0, 10, -10, 0],
-              }}
-              transition={{
-                duration: 3 + i,
-                repeat: Infinity,
-                delay: i * 0.5,
-              }}
-            >
-              {emoji}
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    )
+  // Not logged in - show student login
+  if (!student) {
+    return <StudentLogin onLogin={handleLogin} />
   }
 
-  // ========================================
-  // GAME MODE - Learning Session
-  // ========================================
+  // Game mode - solving problems
   if (started) {
     return (
       <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #FEF3E2 0%, #F3E8FF 50%, #E0E7FF 100%)' }}>
@@ -313,8 +299,8 @@ export default function Home() {
 
               {/* Mini Avatar */}
               <div className="flex items-center gap-2 bg-white/20 rounded-xl px-3 py-2">
-                <Avatar seed={activeProfile.avatarSeed} size={32} />
-                <span className="text-white font-medium text-sm">{activeProfile.name}</span>
+                <Avatar seed={student.avatarSeed} size={32} />
+                <span className="text-white font-medium text-sm">{student.name}</span>
               </div>
 
               <motion.button
@@ -332,7 +318,7 @@ export default function Home() {
         <Conversation
           key={problem.id}
           problem={problem}
-          childName={activeProfile.name}
+          childName={student.name}
           onComplete={handleComplete}
           onNewProblem={handleNewProblem}
         />
@@ -357,9 +343,7 @@ export default function Home() {
     )
   }
 
-  // ========================================
-  // ADVENTURE HUB - Home Screen
-  // ========================================
+  // Adventure Hub - Home Screen
   const progressPercent = Math.min(100, (xpTotal / xpGoal) * 100)
   const goalReached = xpTotal >= xpGoal
 
@@ -373,14 +357,14 @@ export default function Home() {
           </h1>
           <div className="flex gap-3">
             <button
-              onClick={handleSwitchStudent}
+              onClick={handleLogout}
               className="text-sm px-3 py-1 rounded-full transition-all hover:scale-105"
               style={{ backgroundColor: 'rgba(187, 140, 252, 0.2)', color: '#7C3AED' }}
             >
               Switch Student
             </button>
             <Link
-              href="/teacher"
+              href="/auth/login"
               className="text-sm px-3 py-1 rounded-full transition-all hover:scale-105"
               style={{ backgroundColor: 'rgba(187, 140, 252, 0.2)', color: '#7C3AED' }}
             >
@@ -390,7 +374,7 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Section - Avatar as Star */}
+      {/* Hero Section */}
       <div className="flex-1 flex items-center justify-center p-6">
         <motion.div
           className="text-center max-w-md"
@@ -415,7 +399,7 @@ export default function Home() {
                 strokeWidth={8}
               />
               <div className="absolute inset-3 rounded-full overflow-hidden bg-white shadow-lg">
-                <Avatar seed={activeProfile.avatarSeed} size={130} />
+                <Avatar seed={student.avatarSeed} size={130} />
               </div>
             </div>
 
@@ -426,7 +410,7 @@ export default function Home() {
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              Level {activeProgress?.level || 1}
+              Level {progress?.level || 1}
             </motion.div>
           </motion.div>
 
@@ -437,7 +421,7 @@ export default function Home() {
             transition={{ delay: 0.2 }}
           >
             <h1 className="text-3xl font-bold mb-2" style={{ color: '#1F2937' }}>
-              Hey, {activeProfile.name}! 👋
+              Hey, {student.name}! 👋
             </h1>
             <p className="text-lg mb-2" style={{ color: '#6B7280' }}>
               Ready for an adventure?
@@ -510,17 +494,20 @@ export default function Home() {
           >
             <div className="bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full">
               <span className="font-medium" style={{ color: '#6B7280' }}>🔥 Streak: </span>
-              <span className="font-bold" style={{ color: '#F97316' }}>{activeProgress?.currentStreak || 0}</span>
+              <span className="font-bold" style={{ color: '#F97316' }}>{progress?.currentStreak || 0}</span>
             </div>
             <div className="bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full">
               <span className="font-medium" style={{ color: '#6B7280' }}>✅ Correct: </span>
-              <span className="font-bold" style={{ color: '#22C55E' }}>{activeProgress?.correctAnswers || 0}</span>
+              <span className="font-bold" style={{ color: '#22C55E' }}>{progress?.correctAnswers || 0}</span>
             </div>
           </motion.div>
 
-          <p className="text-sm mt-4" style={{ color: '#9CA3AF' }}>
-            Grade {activeProfile.grade} math problems
-          </p>
+          {/* Current Settings Info */}
+          {settings && (
+            <p className="text-sm mt-4" style={{ color: '#9CA3AF' }}>
+              Grade {student.grade} • {settings.allowedTopics.join(', ')} • Level {settings.difficultyLevel}
+            </p>
+          )}
         </motion.div>
       </div>
 
