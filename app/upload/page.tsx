@@ -8,6 +8,7 @@ import { Conversation } from '@/components/Conversation'
 import { Avatar } from '@/components/Avatar'
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar'
 import 'react-circular-progressbar/dist/styles.css'
+import type { MathDomain } from '@/lib/db'
 
 // =============================================================================
 // UPLOAD PAGE - Homework Photo Upload & Solve
@@ -51,7 +52,7 @@ export default function UploadPage() {
     question: string
     answer: string
     hints: string[]
-    domain: string
+    domain: MathDomain
     difficulty: 1 | 2 | 3 | 4 | 5
     gradeRange: [number, number]
     topic: string
