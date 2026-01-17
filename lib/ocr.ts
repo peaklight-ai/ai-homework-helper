@@ -10,11 +10,6 @@ import Tesseract from 'tesseract.js'
 export interface OCRResult {
   text: string
   confidence: number
-  words: Array<{
-    text: string
-    confidence: number
-    bbox: { x0: number; y0: number; x1: number; y1: number }
-  }>
 }
 
 export interface OCRProgress {
@@ -45,17 +40,9 @@ export async function extractTextFromImage(
       }
     )
 
-    // Extract words with bounding boxes
-    const words = result.data.words.map(word => ({
-      text: word.text,
-      confidence: word.confidence,
-      bbox: word.bbox
-    }))
-
     return {
       text: result.data.text.trim(),
-      confidence: result.data.confidence,
-      words
+      confidence: result.data.confidence
     }
   } catch (error) {
     console.error('OCR error:', error)
