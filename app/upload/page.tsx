@@ -47,11 +47,12 @@ export default function UploadPage() {
 
   // Custom problem from OCR
   const [customProblem, setCustomProblem] = useState<{
+    id: string
     question: string
     answer: string
-    hint: string
+    hints: string[]
     domain: string
-    difficulty: number
+    difficulty: 1 | 2 | 3 | 4 | 5
     gradeRange: [number, number]
     topic: string
   } | null>(null)
@@ -100,10 +101,11 @@ export default function UploadPage() {
   const handleProblemExtracted = (question: string, expectedAnswer?: number) => {
     // Create a custom problem from the extracted text
     setCustomProblem({
+      id: `ocr-${Date.now()}`,
       question,
       answer: expectedAnswer?.toString() || '',
-      hint: 'Try breaking the problem into smaller steps.',
-      domain: 'Homework',
+      hints: ['Try breaking the problem into smaller steps.', 'What numbers do you see in the problem?'],
+      domain: 'number-operations',
       difficulty: 2,
       gradeRange: [1, 6],
       topic: 'homework'
