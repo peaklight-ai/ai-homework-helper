@@ -63,7 +63,8 @@ A gamified, Socratic math tutoring app for primary school children (grades 1-6).
 ## Context
 
 **Stakeholders:**
-- Product Owner: Cynthia El Kik (weekly sprint meetings)
+- Product Owners: Cynthia El Kik, Chadi Abi Fadel (weekly sprint meetings)
+- dev: Chadi Abi Fadel (peaklight.ai)
 - Target Users: Primary school teachers and students (grades 1-6)
 
 **Current State:**
