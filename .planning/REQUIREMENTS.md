@@ -8,8 +8,8 @@
 
 ### Bug Fixes
 
-- [ ] **BUG-01**: Fix app blocking after correct answer — AI should entice user to try another question, not follow up on the solved problem
-- [ ] **BUG-02**: Fix email configuration — emails going to junk folder instead of inbox
+- [ ] **BUG-01**: Fix app blocking after correct answer -- AI should entice user to try another question, not follow up on the solved problem
+- [ ] **BUG-02**: Fix email configuration -- emails going to junk folder instead of inbox
 
 ### Class Management
 
@@ -37,7 +37,7 @@
 
 - [ ] **STUDENT-01**: Student can see their targets/objectives (set by teacher)
 - [ ] **STUDENT-02**: Dynamic strengths/weaknesses profile per student (tracks mastery by topic)
-- [ ] **STUDENT-03**: Teacher can view cognitive reasoning patterns — how student thinks through problems, not just right/wrong
+- [ ] **STUDENT-03**: Teacher can view cognitive reasoning patterns -- how student thinks through problems, not just right/wrong
 
 ---
 
@@ -65,16 +65,16 @@
 
 ## Validated (Existing Functionality)
 
-- ✓ Teacher can sign up and log in with email/password
-- ✓ Teacher can add individual students with login codes
-- ✓ Student can log in with 6-character code
-- ✓ Student receives AI-guided Socratic tutoring
-- ✓ AI streams responses in real-time
-- ✓ Student can upload homework photos for OCR extraction
-- ✓ XP points system tracks student progress
-- ✓ Teacher can view student list and basic progress
-- ✓ Topic/domain selection available (partial)
-- ✓ 30+ sample math problems across domains
+- Teacher can sign up and log in with email/password
+- Teacher can add individual students with login codes
+- Student can log in with 6-character code
+- Student receives AI-guided Socratic tutoring
+- AI streams responses in real-time
+- Student can upload homework photos for OCR extraction
+- XP points system tracks student progress
+- Teacher can view student list and basic progress
+- Topic/domain selection available (partial)
+- 30+ sample math problems across domains
 
 ---
 
@@ -82,22 +82,23 @@
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| BUG-01 | — | Pending |
-| BUG-02 | — | Pending |
-| CLASS-01 | — | Pending |
-| CLASS-02 | — | Pending |
-| CLASS-03 | — | Pending |
-| SETTINGS-01 | — | Pending |
-| SETTINGS-02 | — | Pending |
-| HW-01 | — | Pending |
-| HW-02 | — | Pending |
-| DIAG-01 | — | Pending |
-| DIAG-02 | — | Pending |
-| DIAG-03 | — | Pending |
-| STUDENT-01 | — | Pending |
-| STUDENT-02 | — | Pending |
-| STUDENT-03 | — | Pending |
+| BUG-01 | Phase 1 | Pending |
+| BUG-02 | Phase 1 | Pending |
+| CLASS-01 | Phase 1 | Pending |
+| CLASS-02 | Phase 1 | Pending |
+| CLASS-03 | Phase 1 | Pending |
+| SETTINGS-01 | Phase 1 | Pending |
+| SETTINGS-02 | Phase 3 | Pending |
+| HW-01 | Phase 1 | Pending |
+| HW-02 | Phase 1 | Pending |
+| DIAG-01 | Phase 2 | Pending |
+| DIAG-02 | Phase 2 | Pending |
+| DIAG-03 | Phase 2 | Pending |
+| STUDENT-01 | Phase 2 | Pending |
+| STUDENT-02 | Phase 2 | Pending |
+| STUDENT-03 | Phase 2 | Pending |
 
 ---
 
 *Requirements defined: 2026-01-26*
+*Phase mapping updated: 2026-01-26*
