@@ -103,6 +103,26 @@ export interface ClassWithStudents extends Class {
   students: Student[]
 }
 
+export interface Exercise {
+  id: string
+  teacher_id: string
+  question: string
+  answer: string
+  difficulty: 1 | 2 | 3 | 4 | 5
+  domain: string | null
+  grade: 1 | 2 | 3 | 4 | 5 | 6 | null
+  created_at: string
+}
+
+export interface ExerciseAssignment {
+  id: string
+  exercise_id: string
+  class_id: string | null
+  student_id: string | null
+  due_date: string | null
+  assigned_at: string
+}
+
 // =============================================================================
 // BROWSER CLIENT (for client-side components)
 // =============================================================================
@@ -535,4 +555,136 @@ export async function getStudentsByClass(classId: string): Promise<Student[]> {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data || []).map((cs: any) => cs.students).filter(Boolean)
+}
+
+// =============================================================================
+// EXERCISE FUNCTIONS
+// =============================================================================
+
+export async function getExercisesByTeacher(teacherId: string): Promise<Exercise[]> {
+  const supabase = createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from('exercises')
+    .select('*')
+    .eq('teacher_id', teacherId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching exercises:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function createExercise(
+  teacherId: string,
+  question: string,
+  answer: string,
+  difficulty: 1 | 2 | 3 | 4 | 5 = 3,
+  domain?: string,
+  grade?: 1 | 2 | 3 | 4 | 5 | 6
+): Promise<Exercise | null> {
+  const supabase = createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from('exercises')
+    .insert({
+      teacher_id: teacherId,
+      question,
+      answer,
+      difficulty,
+      domain: domain || null,
+      grade: grade || null
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating exercise:', error)
+    return null
+  }
+  return data
+}
+
+export async function assignExerciseToClass(
+  exerciseId: string,
+  classId: string,
+  dueDate?: string
+): Promise<boolean> {
+  const supabase = createServerSupabaseClient()
+  const { error } = await supabase
+    .from('exercise_assignments')
+    .insert({
+      exercise_id: exerciseId,
+      class_id: classId,
+      due_date: dueDate || null
+    })
+
+  if (error) {
+    console.error('Error assigning to class:', error)
+    return false
+  }
+  return true
+}
+
+export async function assignExerciseToStudents(
+  exerciseId: string,
+  studentIds: string[],
+  dueDate?: string
+): Promise<{ success: number; failed: number }> {
+  const supabase = createServerSupabaseClient()
+  let success = 0
+  let failed = 0
+
+  for (const studentId of studentIds) {
+    const { error } = await supabase
+      .from('exercise_assignments')
+      .insert({
+        exercise_id: exerciseId,
+        student_id: studentId,
+        due_date: dueDate || null
+      })
+
+    if (error) {
+      console.error('Error assigning to student:', error)
+      failed++
+    } else {
+      success++
+    }
+  }
+
+  return { success, failed }
+}
+
+export async function getAssignmentsForStudent(studentId: string): Promise<Exercise[]> {
+  const supabase = createServerSupabaseClient()
+
+  // Get student's class IDs
+  const { data: enrollments } = await supabase
+    .from('class_students')
+    .select('class_id')
+    .eq('student_id', studentId)
+
+  const classIds = enrollments?.map(e => e.class_id) || []
+
+  // Get assignments for student directly or via class
+  const { data: assignments, error } = await supabase
+    .from('exercise_assignments')
+    .select('exercise_id, exercises (*)')
+    .or(`student_id.eq.${studentId},class_id.in.(${classIds.join(',')})`)
+
+  if (error) {
+    console.error('Error fetching assignments:', error)
+    return []
+  }
+
+  // Extract unique exercises
+  const exerciseMap = new Map<string, Exercise>()
+  assignments?.forEach(a => {
+    const ex = a.exercises as unknown as Exercise
+    if (ex && !exerciseMap.has(ex.id)) {
+      exerciseMap.set(ex.id, ex)
+    }
+  })
+
+  return Array.from(exerciseMap.values())
 }
