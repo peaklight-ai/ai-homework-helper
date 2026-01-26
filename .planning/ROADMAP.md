@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 6 plans in 4 waves
 
 Plans:
-- [ ] 01-01-PLAN.md - Bug fixes (BUG-01, BUG-02) + database schema foundation
+- [x] 01-01-PLAN.md - Bug fixes (BUG-01, BUG-02) + database schema foundation
 - [ ] 01-02-PLAN.md - Class management API (types, CRUD, enrollment)
 - [ ] 01-03-PLAN.md - CSV import + ClassSelector components
 - [ ] 01-04-PLAN.md - Dashboard integration (class-scoped student views)
@@ -74,7 +74,7 @@ Phases execute in numeric order: 1 -> 1.1 (if inserted) -> 2 -> 2.1 (if inserted
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Sprint 1 - Teacher Experience | 0/6 | Ready to execute | - |
+| 1. Sprint 1 - Teacher Experience | 1/6 | In progress | - |
 | 2. Sprint 2 - Student Experience | 0/TBD | Not started | - |
 | 3. Buffer Week - Polish | 0/TBD | Not started | - |
 
