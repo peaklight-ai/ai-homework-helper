@@ -28,12 +28,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Teacher can configure topic and difficulty level for individual students
   4. Teacher can upload homework and assign exercises to specific students
   5. App does not block interaction after correct answer (bug fixed)
-**Plans**: TBD
+**Plans**: 6 plans in 4 waves
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md - Bug fixes (BUG-01, BUG-02) + database schema foundation
+- [ ] 01-02-PLAN.md - Class management API (types, CRUD, enrollment)
+- [ ] 01-03-PLAN.md - CSV import + ClassSelector components
+- [ ] 01-04-PLAN.md - Dashboard integration (class-scoped student views)
+- [ ] 01-05-PLAN.md - Exercise system (schema, types, API)
+- [ ] 01-06-PLAN.md - Exercise UI + final verification
 
 ### Phase 2: Sprint 2 - Student Experience & Analytics
 **Goal**: Students receive diagnostic placement and teachers gain cognitive visibility into how students think
@@ -71,10 +74,11 @@ Phases execute in numeric order: 1 -> 1.1 (if inserted) -> 2 -> 2.1 (if inserted
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Sprint 1 - Teacher Experience | 0/TBD | Not started | - |
+| 1. Sprint 1 - Teacher Experience | 0/6 | Ready to execute | - |
 | 2. Sprint 2 - Student Experience | 0/TBD | Not started | - |
 | 3. Buffer Week - Polish | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-01-26*
+*Phase 1 planned: 2026-01-26*
 *Timeline: End of February 2026 (~3 weeks)*
