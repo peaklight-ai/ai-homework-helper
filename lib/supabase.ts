@@ -83,6 +83,26 @@ export interface HomeworkUpload {
   created_at: string
 }
 
+export interface Class {
+  id: string
+  teacher_id: string
+  name: string
+  grade: 1 | 2 | 3 | 4 | 5 | 6 | null
+  created_at: string
+}
+
+export interface ClassStudent {
+  id: string
+  class_id: string
+  student_id: string
+  enrolled_at: string
+}
+
+export interface ClassWithStudents extends Class {
+  studentCount: number
+  students: Student[]
+}
+
 // =============================================================================
 // BROWSER CLIENT (for client-side components)
 // =============================================================================
@@ -391,4 +411,128 @@ export async function updateHomeworkUpload(
     return false
   }
   return true
+}
+
+// =============================================================================
+// CLASS FUNCTIONS
+// =============================================================================
+
+export async function getClassesByTeacher(teacherId: string): Promise<ClassWithStudents[]> {
+  const supabase = createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from('classes')
+    .select(`
+      *,
+      class_students (
+        student_id,
+        students (id, name, grade, avatar_seed, login_code)
+      )
+    `)
+    .eq('teacher_id', teacherId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching classes:', error)
+    return []
+  }
+
+  return (data || []).map(c => ({
+    ...c,
+    studentCount: c.class_students?.length || 0,
+    students: c.class_students?.map((cs: { students: Student }) => cs.students).filter(Boolean) || []
+  }))
+}
+
+export async function createClass(
+  teacherId: string,
+  name: string,
+  grade?: 1 | 2 | 3 | 4 | 5 | 6
+): Promise<Class | null> {
+  const supabase = createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from('classes')
+    .insert({ teacher_id: teacherId, name, grade })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating class:', error)
+    return null
+  }
+  return data
+}
+
+export async function updateClass(
+  classId: string,
+  updates: { name?: string; grade?: 1 | 2 | 3 | 4 | 5 | 6 }
+): Promise<boolean> {
+  const supabase = createServerSupabaseClient()
+  const { error } = await supabase
+    .from('classes')
+    .update(updates)
+    .eq('id', classId)
+
+  if (error) {
+    console.error('Error updating class:', error)
+    return false
+  }
+  return true
+}
+
+export async function deleteClass(classId: string): Promise<boolean> {
+  const supabase = createServerSupabaseClient()
+  const { error } = await supabase
+    .from('classes')
+    .delete()
+    .eq('id', classId)
+
+  if (error) {
+    console.error('Error deleting class:', error)
+    return false
+  }
+  return true
+}
+
+export async function enrollStudent(classId: string, studentId: string): Promise<boolean> {
+  const supabase = createServerSupabaseClient()
+  const { error } = await supabase
+    .from('class_students')
+    .insert({ class_id: classId, student_id: studentId })
+
+  if (error) {
+    console.error('Error enrolling student:', error)
+    return false
+  }
+  return true
+}
+
+export async function unenrollStudent(classId: string, studentId: string): Promise<boolean> {
+  const supabase = createServerSupabaseClient()
+  const { error } = await supabase
+    .from('class_students')
+    .delete()
+    .eq('class_id', classId)
+    .eq('student_id', studentId)
+
+  if (error) {
+    console.error('Error unenrolling student:', error)
+    return false
+  }
+  return true
+}
+
+export async function getStudentsByClass(classId: string): Promise<Student[]> {
+  const supabase = createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from('class_students')
+    .select('students (*)')
+    .eq('class_id', classId)
+
+  if (error) {
+    console.error('Error fetching class students:', error)
+    return []
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data || []).map((cs: any) => cs.students).filter(Boolean)
 }
