@@ -155,8 +155,20 @@ export default function TeacherDashboard() {
         throw new Error('Failed to create student')
       }
 
-      // Refresh student list
+      const data = await response.json()
+
+      // If a class is selected, enroll student in that class
+      if (selectedClassId && data.student?.id) {
+        await fetch(`/api/classes/${selectedClassId}/students`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ studentId: data.student.id })
+        })
+      }
+
+      // Refresh lists
       await fetchStudents()
+      await fetchClasses()
       setNewStudentName('')
       setShowAddStudent(false)
     } catch (err) {
@@ -232,7 +244,7 @@ export default function TeacherDashboard() {
   // Filter students by selected class
   const selectedClass = classes.find(c => c.id === selectedClassId)
   const classStudentIds = selectedClass?.students?.map(s => s.id) || []
-  const filteredStudents = selectedClassId
+  const filteredStudents: Student[] = selectedClassId
     ? students.filter(s => classStudentIds.includes(s.id))
     : students
 
