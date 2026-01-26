@@ -2,12 +2,19 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Exercise, ClassWithStudents, Student } from '@/lib/supabase'
+import { Exercise, ClassWithStudents } from '@/lib/supabase'
+
+// Minimal student type for assignment UI (compatible with both page types)
+interface StudentForAssignment {
+  id: string
+  name: string
+  grade: number
+}
 
 interface ExerciseAssignmentModalProps {
   exercise: Exercise
   classes: ClassWithStudents[]
-  allStudents: Student[]
+  allStudents: StudentForAssignment[]
   onClose: () => void
   onAssigned: () => void
 }

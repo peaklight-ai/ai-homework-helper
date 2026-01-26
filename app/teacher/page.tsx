@@ -9,7 +9,9 @@ import { Avatar } from '@/components/Avatar'
 import { ClassSelector } from '@/components/ClassSelector'
 import { CreateClassModal } from '@/components/CreateClassModal'
 import { CSVImportModal } from '@/components/CSVImportModal'
-import { ClassWithStudents } from '@/lib/supabase'
+import { ExerciseUploadForm } from '@/components/ExerciseUploadForm'
+import { ExerciseAssignmentModal } from '@/components/ExerciseAssignmentModal'
+import { ClassWithStudents, Exercise } from '@/lib/supabase'
 
 // =============================================================================
 // V3 TEACHER DASHBOARD - SUPABASE INTEGRATED
@@ -72,6 +74,14 @@ export default function TeacherDashboard() {
   const [showCreateClass, setShowCreateClass] = useState(false)
   const [showImportCSV, setShowImportCSV] = useState(false)
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'students' | 'exercises'>('students')
+
+  // Exercise state
+  const [exercises, setExercises] = useState<Exercise[]>([])
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
+  const [showAssignModal, setShowAssignModal] = useState(false)
+
   // Fetch students
   const fetchStudents = useCallback(async () => {
     if (!user) return
@@ -115,12 +125,30 @@ export default function TeacherDashboard() {
     }
   }, [user])
 
+  const fetchExercises = useCallback(async () => {
+    if (!user) return
+
+    try {
+      const response = await fetch('/api/exercises', {
+        headers: { 'x-teacher-id': user.id }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setExercises(data.exercises || [])
+      }
+    } catch (err) {
+      console.error('Error fetching exercises:', err)
+    }
+  }, [user])
+
   useEffect(() => {
     if (user) {
       fetchStudents()
       fetchClasses()
+      fetchExercises()
     }
-  }, [user, fetchStudents, fetchClasses])
+  }, [user, fetchStudents, fetchClasses, fetchExercises])
 
   // Load XP goal from localStorage
   useEffect(() => {
@@ -432,6 +460,32 @@ export default function TeacherDashboard() {
           </div>
         </motion.div>
 
+        {/* Tab Navigation */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setActiveTab('students')}
+            className="px-4 py-2 rounded-lg font-medium transition-all"
+            style={{
+              backgroundColor: activeTab === 'students' ? '#38BDF8' : '#1E293B',
+              color: activeTab === 'students' ? '#020617' : '#94A3B8'
+            }}
+          >
+            Students
+          </button>
+          <button
+            onClick={() => setActiveTab('exercises')}
+            className="px-4 py-2 rounded-lg font-medium transition-all"
+            style={{
+              backgroundColor: activeTab === 'exercises' ? '#38BDF8' : '#1E293B',
+              color: activeTab === 'exercises' ? '#020617' : '#94A3B8'
+            }}
+          >
+            Exercises ({exercises.length})
+          </button>
+        </div>
+
+        {/* Students Tab */}
+        {activeTab === 'students' && (
         <div className="grid md:grid-cols-3 gap-6">
           {/* Student List */}
           <div
@@ -750,6 +804,70 @@ export default function TeacherDashboard() {
             )}
           </div>
         </div>
+        )}
+
+        {/* Exercises Tab */}
+        {activeTab === 'exercises' && (
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Exercise creation form */}
+            <ExerciseUploadForm
+              teacherId={user?.id || ''}
+              onExerciseCreated={fetchExercises}
+            />
+
+            {/* Exercise list */}
+            <div
+              className="rounded-xl p-5 border"
+              style={{ backgroundColor: '#0F172A', borderColor: '#1E293B' }}
+            >
+              <h3 className="font-bold text-lg mb-4" style={{ color: '#F9FAFB' }}>
+                Your Exercises
+              </h3>
+              {exercises.length === 0 ? (
+                <p className="text-center py-8" style={{ color: '#94A3B8' }}>
+                  No exercises yet. Create one to get started!
+                </p>
+              ) : (
+                <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                  {exercises.map(ex => (
+                    <div
+                      key={ex.id}
+                      className="p-3 rounded-lg"
+                      style={{ backgroundColor: '#1E293B' }}
+                    >
+                      <p className="font-medium mb-1" style={{ color: '#F9FAFB' }}>
+                        {ex.question}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex gap-2 text-xs">
+                          <span style={{ color: '#FACC15' }}>{'*'.repeat(ex.difficulty)}</span>
+                          {ex.domain && (
+                            <span
+                              className="px-2 py-0.5 rounded capitalize"
+                              style={{ backgroundColor: '#0F172A', color: '#38BDF8' }}
+                            >
+                              {ex.domain}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedExercise(ex)
+                            setShowAssignModal(true)
+                          }}
+                          className="px-3 py-1 rounded text-xs font-medium transition-all hover:scale-105"
+                          style={{ backgroundColor: '#22C55E', color: '#020617' }}
+                        >
+                          Assign
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Settings Modal */}
@@ -854,6 +972,23 @@ export default function TeacherDashboard() {
           onImportComplete={() => {
             fetchClasses()
             fetchStudents()
+          }}
+        />
+      )}
+
+      {/* Exercise Assignment Modal */}
+      {showAssignModal && selectedExercise && (
+        <ExerciseAssignmentModal
+          exercise={selectedExercise}
+          classes={classes}
+          allStudents={students}
+          onClose={() => {
+            setShowAssignModal(false)
+            setSelectedExercise(null)
+          }}
+          onAssigned={() => {
+            setShowAssignModal(false)
+            setSelectedExercise(null)
           }}
         />
       )}
