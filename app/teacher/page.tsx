@@ -6,6 +6,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useUser, useAuth, useSupabase } from '@/components/SupabaseProvider'
 import { Avatar } from '@/components/Avatar'
+import { ClassSelector } from '@/components/ClassSelector'
+import { CreateClassModal } from '@/components/CreateClassModal'
+import { CSVImportModal } from '@/components/CSVImportModal'
+import { ClassWithStudents } from '@/lib/supabase'
 
 // =============================================================================
 // V3 TEACHER DASHBOARD - SUPABASE INTEGRATED
@@ -62,6 +66,12 @@ export default function TeacherDashboard() {
   const [editingSettings, setEditingSettings] = useState<StudentSettings | null>(null)
   const [isSavingSettings, setIsSavingSettings] = useState(false)
 
+  // Class management
+  const [classes, setClasses] = useState<ClassWithStudents[]>([])
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null)
+  const [showCreateClass, setShowCreateClass] = useState(false)
+  const [showImportCSV, setShowImportCSV] = useState(false)
+
   // Fetch students
   const fetchStudents = useCallback(async () => {
     if (!user) return
@@ -88,11 +98,29 @@ export default function TeacherDashboard() {
     }
   }, [user])
 
+  const fetchClasses = useCallback(async () => {
+    if (!user) return
+
+    try {
+      const response = await fetch('/api/classes', {
+        headers: { 'x-teacher-id': user.id }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setClasses(data.classes || [])
+      }
+    } catch (err) {
+      console.error('Error fetching classes:', err)
+    }
+  }, [user])
+
   useEffect(() => {
     if (user) {
       fetchStudents()
+      fetchClasses()
     }
-  }, [user, fetchStudents])
+  }, [user, fetchStudents, fetchClasses])
 
   // Load XP goal from localStorage
   useEffect(() => {
@@ -201,13 +229,20 @@ export default function TeacherDashboard() {
 
   const selectedStudentData = students.find(s => s.id === selectedStudent)
 
-  // Calculate class stats
-  const totalStudents = students.length
-  const totalXP = students.reduce((sum, s) => sum + s.progress.totalXp, 0)
-  const totalCorrect = students.reduce((sum, s) => sum + s.progress.correctAnswers, 0)
-  const totalQuestions = students.reduce((sum, s) => sum + s.progress.totalQuestions, 0)
+  // Filter students by selected class
+  const selectedClass = classes.find(c => c.id === selectedClassId)
+  const classStudentIds = selectedClass?.students?.map(s => s.id) || []
+  const filteredStudents = selectedClassId
+    ? students.filter(s => classStudentIds.includes(s.id))
+    : students
+
+  // Calculate class stats based on filtered view
+  const totalStudents = filteredStudents.length
+  const totalXP = filteredStudents.reduce((sum, s) => sum + s.progress.totalXp, 0)
+  const totalCorrect = filteredStudents.reduce((sum, s) => sum + s.progress.correctAnswers, 0)
+  const totalQuestions = filteredStudents.reduce((sum, s) => sum + s.progress.totalQuestions, 0)
   const avgAccuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0
-  const studentsAtGoal = students.filter(s => s.progress.totalXp >= xpGoal).length
+  const studentsAtGoal = filteredStudents.filter(s => s.progress.totalXp >= xpGoal).length
 
   // Loading state
   if (authLoading) {
@@ -391,17 +426,38 @@ export default function TeacherDashboard() {
             className="md:col-span-1 rounded-xl p-4 border"
             style={{ backgroundColor: '#0F172A', borderColor: '#1E293B' }}
           >
+            {/* Class Selector */}
+            <ClassSelector
+              classes={classes}
+              selectedClassId={selectedClassId}
+              onSelectClass={setSelectedClassId}
+              onCreateClass={() => setShowCreateClass(true)}
+            />
+
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold" style={{ color: '#F9FAFB' }}>Students</h2>
-              <button
-                onClick={() => setShowAddStudent(!showAddStudent)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                style={{ backgroundColor: '#38BDF8', color: '#020617' }}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showAddStudent ? "M6 18L18 6M6 6l12 12" : "M12 6v12M6 12h12"} />
-                </svg>
-              </button>
+              <h2 className="text-lg font-bold" style={{ color: '#F9FAFB' }}>
+                {selectedClassId ? selectedClass?.name : 'All Students'}
+              </h2>
+              <div className="flex gap-2">
+                {selectedClassId && (
+                  <button
+                    onClick={() => setShowImportCSV(true)}
+                    className="px-3 py-1 rounded-lg text-sm font-medium transition-all hover:scale-105"
+                    style={{ backgroundColor: '#22C55E', color: '#020617' }}
+                  >
+                    Import CSV
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowAddStudent(!showAddStudent)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                  style={{ backgroundColor: '#38BDF8', color: '#020617' }}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showAddStudent ? "M6 18L18 6M6 6l12 12" : "M12 6v12M6 12h12"} />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Add Student Form */}
@@ -414,7 +470,7 @@ export default function TeacherDashboard() {
               >
                 <input
                   type="text"
-                  placeholder="Student name"
+                  placeholder={selectedClassId ? `Student name (adding to ${selectedClass?.name})` : "Student name"}
                   value={newStudentName}
                   onChange={(e) => setNewStudentName(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg mb-2 focus:outline-none focus:ring-2"
@@ -455,7 +511,7 @@ export default function TeacherDashboard() {
                 />
                 Loading students...
               </div>
-            ) : students.length === 0 ? (
+            ) : filteredStudents.length === 0 ? (
               <div className="text-center py-8" style={{ color: '#94A3B8' }}>
                 <div
                   className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center"
@@ -465,12 +521,12 @@ export default function TeacherDashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                   </svg>
                 </div>
-                <p>No students yet</p>
-                <p className="text-sm mt-1">Click + to add your first student</p>
+                <p>{selectedClassId ? 'No students in this class' : 'No students yet'}</p>
+                <p className="text-sm mt-1">{selectedClassId ? 'Add students or import CSV' : 'Click + to add your first student'}</p>
               </div>
             ) : (
               <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
-                {students.map((student) => {
+                {filteredStudents.map((student) => {
                   const goalReached = student.progress.totalXp >= xpGoal
                   const progressPercent = Math.min(100, (student.progress.totalXp / xpGoal) * 100)
                   return (
@@ -763,6 +819,31 @@ export default function TeacherDashboard() {
             </div>
           </motion.div>
         </div>
+      )}
+
+      {/* Create Class Modal */}
+      {showCreateClass && user && (
+        <CreateClassModal
+          teacherId={user.id}
+          onClose={() => setShowCreateClass(false)}
+          onClassCreated={() => {
+            fetchClasses()
+            fetchStudents()
+          }}
+        />
+      )}
+
+      {/* CSV Import Modal */}
+      {showImportCSV && selectedClass && (
+        <CSVImportModal
+          classId={selectedClass.id}
+          className={selectedClass.name}
+          onClose={() => setShowImportCSV(false)}
+          onImportComplete={() => {
+            fetchClasses()
+            fetchStudents()
+          }}
+        />
       )}
 
       {/* PLAI Footer */}
