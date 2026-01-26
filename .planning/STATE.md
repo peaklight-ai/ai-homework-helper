@@ -10,29 +10,29 @@ See: .planning/PROJECT.md (updated 2026-01-26)
 ## Current Position
 
 Phase: 1 of 3 (Sprint 1 - Teacher Experience)
-Plan: 3 of 6 in current phase
-Status: Plan 01-03 complete
-Last activity: 2026-01-26 -- Completed 01-03-PLAN.md (class selection and CSV import)
+Plan: 5 of 6 in current phase
+Status: Plan 01-05 complete
+Last activity: 2026-01-27 -- Completed 01-05-PLAN.md (exercise system)
 
-Progress: [###-------] 3/9 plans (~33%)
+Progress: [#####-----] 5/9 plans (~56%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 5
 - Average duration: ~5 min
-- Total execution time: ~14 min
+- Total execution time: ~26 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1. Sprint 1 | 3/6 | ~14 min | ~5 min |
+| 1. Sprint 1 | 5/6 | ~26 min | ~5 min |
 | 2. Sprint 2 | 0/TBD | - | - |
 | 3. Buffer | 0/TBD | - | - |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (~5 min), 01-02 (~3 min), 01-03 (~6 min)
+- Last 5 plans: 01-01 (~5 min), 01-02 (~3 min), 01-03 (~6 min), 01-04 (~6 min), 01-05 (~6 min)
 - Trend: Consistent velocity, UI/component plans slightly longer
 
 *Updated after each plan completion*
@@ -53,10 +53,13 @@ Recent decisions affecting current work:
 - [01-03]: Reused existing Zod from eslint-config-next instead of adding dependency
 - [01-03]: Minimal CSV schema (name, grade only) per user cost constraint
 - [01-03]: Used --legacy-peer-deps for react-dropzone (React 19 compat)
+- [01-05]: Minimal exercise schema per user cost constraint
+- [01-05]: Polymorphic assignments (class_id OR student_id) with CHECK constraint
 
 ### Pending Todos
 
 - BUG-02: Configure Resend SMTP for email delivery (deferred, non-blocking)
+- Run 002_exercises.sql migration in Supabase Dashboard
 
 ### Blockers/Concerns
 
@@ -65,9 +68,9 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-01-26 22:08 UTC
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-01-27 00:15 UTC
+Stopped at: Completed 01-05-PLAN.md
 Resume file: None
 
 ---
-*Next: /gsd:execute-phase (continue with 01-04-PLAN.md)*
+*Next: /gsd:execute-phase (continue with 01-06-PLAN.md)*
