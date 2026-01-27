@@ -30,7 +30,7 @@ export function ClassSelector({
         <option value="">All Students</option>
         {classes.map((c) => (
           <option key={c.id} value={c.id}>
-            {c.name} ({c.studentCount} students)
+            {c.name} {c.grade ? `(Grade ${c.grade})` : ''} — {c.studentCount} students
           </option>
         ))}
       </select>

@@ -99,9 +99,20 @@ export function CSVImportModal({
         <h2 className="text-xl font-bold mb-2" style={{ color: '#F9FAFB' }}>
           Import Students to {className}
         </h2>
-        <p className="text-sm mb-4" style={{ color: '#94A3B8' }}>
-          Upload a CSV file with columns: name, grade
-        </p>
+
+        {/* CSV format explanation */}
+        <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: '#1E293B' }}>
+          <p className="text-sm font-medium mb-2" style={{ color: '#F9FAFB' }}>
+            CSV Format:
+          </p>
+          <div className="text-xs space-y-1" style={{ color: '#94A3B8' }}>
+            <p><strong style={{ color: '#38BDF8' }}>name</strong> — Student's full name</p>
+            <p><strong style={{ color: '#38BDF8' }}>grade</strong> — Student's grade level (1-6), used to match problem difficulty</p>
+          </div>
+          <p className="text-xs mt-2" style={{ color: '#64748B' }}>
+            Example: Emma Johnson, 3
+          </p>
+        </div>
 
         {/* Error message */}
         {error && (

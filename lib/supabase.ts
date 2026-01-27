@@ -439,28 +439,40 @@ export async function updateHomeworkUpload(
 
 export async function getClassesByTeacher(teacherId: string): Promise<ClassWithStudents[]> {
   const supabase = createServerSupabaseClient()
-  const { data, error } = await supabase
+
+  // First get classes
+  const { data: classesData, error: classesError } = await supabase
     .from('classes')
-    .select(`
-      *,
-      class_students (
-        student_id,
-        students (id, name, grade, avatar_seed, login_code)
-      )
-    `)
+    .select('*')
     .eq('teacher_id', teacherId)
     .order('created_at', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching classes:', error)
+  if (classesError) {
+    console.error('Error fetching classes:', classesError)
     return []
   }
 
-  return (data || []).map(c => ({
-    ...c,
-    studentCount: c.class_students?.length || 0,
-    students: c.class_students?.map((cs: { students: Student }) => cs.students).filter(Boolean) || []
-  }))
+  console.log('[getClassesByTeacher] found classes:', classesData?.length)
+
+  // Then get enrollments for each class
+  const classesWithStudents = await Promise.all(
+    (classesData || []).map(async (c) => {
+      const { data: enrollments } = await supabase
+        .from('class_students')
+        .select('student_id, students(*)')
+        .eq('class_id', c.id)
+
+      const students = enrollments?.map((e: { students: Student }) => e.students).filter(Boolean) || []
+
+      return {
+        ...c,
+        studentCount: students.length,
+        students
+      }
+    })
+  )
+
+  return classesWithStudents
 }
 
 export async function createClass(
