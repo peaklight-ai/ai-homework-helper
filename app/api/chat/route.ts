@@ -3,7 +3,7 @@ import { getSocraticResponseStream } from '@/lib/gemini'
 
 export async function POST(request: NextRequest) {
   try {
-    const { userMessage, problem, conversationHistory } = await request.json()
+    const { userMessage, problem, conversationHistory, studentGrade, hints, strategies } = await request.json()
 
     if (!userMessage || !problem) {
       return new Response(
@@ -18,12 +18,18 @@ export async function POST(request: NextRequest) {
       content: msg.parts
     }))
 
+    // Calculate hints already given based on conversation length
+    const hintsGiven = Math.floor(formattedHistory.length / 4) // Give hint every 4 exchanges
+
     // Get streaming response from Gemini via CometAPI
     const { stream, isCorrect } = await getSocraticResponseStream(userMessage, {
       problemQuestion: problem.question,
       problemAnswer: problem.answer,
       conversationHistory: formattedHistory,
-      hintsGiven: 0
+      hintsGiven,
+      studentGrade: studentGrade || problem.gradeRange?.[0] || 3,
+      hints: hints || problem.hints || [],
+      strategies: strategies || undefined
     })
 
     // Create a transform stream to parse SSE and send JSON chunks

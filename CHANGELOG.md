@@ -2,6 +2,101 @@
 
 All notable changes to AI Homework Helper will be documented in this file.
 
+## [2.2.0] - 2026-02-02
+
+### Sprint 1: Teacher Experience
+
+- **Class Management** - Full class organization system
+  - Create, edit, delete classes
+  - Students organized by class (not mixed lists)
+  - Class dropdown in teacher dashboard
+  - Class-scoped student views
+
+- **CSV Import** - Bulk student import
+  - Drag-and-drop CSV upload
+  - Preview with validation (valid/invalid rows)
+  - Format: name,grade columns
+  - Auto-enroll to selected class
+
+- **Exercise System** - Teacher-created exercises
+  - Create exercises with question, answer, difficulty, domain, grade
+  - Assign exercises to entire class OR specific students
+  - Optional due date for assignments
+  - Exercises tab in teacher dashboard
+
+- **Bug Fixes**
+  - ✅ BUG-01: App no longer blocks after correct answer
+  - ⏸️ BUG-02: Email SMTP configuration (deferred)
+
+### Sprint 2: Student Experience & Analytics
+
+- **Diagnostic System** - Adaptive placement test
+  - Automatically shown on student's first login
+  - 12 questions across domains (addition, subtraction, multiplication, division)
+  - Adaptive difficulty based on responses
+  - Results auto-set student's difficulty level
+  - Results visible to teacher
+
+- **Student Targets** - Teacher-set objectives
+  - Teachers can set learning goals for students
+  - Students see their targets on home screen
+  - Mark targets as complete
+
+- **Topic Mastery** - Strengths/weaknesses tracking
+  - Track performance by math domain
+  - Calculate mastery percentages
+  - Visual progress bars
+
+- **Cognitive Visibility** - Learning profile for teachers
+  - Diagnostic results summary
+  - Strengths and areas to improve
+  - All topics mastery overview
+
+### New Components
+
+- `ClassSelector.tsx` - Class dropdown with "All Students" option
+- `CreateClassModal.tsx` - Modal for creating new classes
+- `CSVImportModal.tsx` - CSV upload with preview/validation
+- `ExerciseUploadForm.tsx` - Create new exercises
+- `ExerciseAssignmentModal.tsx` - Assign exercises to class/students
+- `DiagnosticTest.tsx` - Full-screen diagnostic flow
+- `StudentTargets.tsx` - Display and manage student targets
+- `StudentProfile.tsx` - Mastery and cognitive insights
+
+### New API Routes
+
+- `/api/classes` - Class CRUD operations
+- `/api/exercises` - Exercise CRUD
+- `/api/exercises/assign` - Exercise assignment
+- `/api/diagnostic` - Diagnostic test flow
+- `/api/targets` - Student targets CRUD
+- `/api/mastery` - Topic mastery tracking
+
+### Buffer Week Polish
+
+- **Hints & Strategies** - Teachers can add hints and teaching strategies to exercises
+  - Up to 5 hints per exercise (progressively shown to students)
+  - Teaching strategy guides how AI tutors the problem
+  - Collapsible UI in exercise form
+
+- **Pedagogy-Based AI Guidance** - AI adapts teaching style by grade
+  - Grades 1-2: Very guided, solve together, concrete examples
+  - Grade 3: Model and scaffold, teach vocabulary
+  - Grades 4-6: Coach and extend, encourage independence
+
+- **Adaptive Progression Logic** - Grade-based difficulty adjustment
+  - Grade 1: Very patient (4 correct to level up)
+  - Grades 4-6: More challenging (2 correct to level up)
+
+### Database Migrations
+
+**Note:** Run these in Supabase Dashboard:
+- `002_exercises.sql` - Classes and exercises tables
+- `003_diagnostic_system.sql` - Diagnostic and analytics tables
+- `004_hints_progression.sql` - Hints, strategies, and progression rules
+
+---
+
 ## [2.1.0] - 2026-01-18
 
 ### New Features

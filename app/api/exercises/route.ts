@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { teacherId, question, answer, difficulty, domain, grade } = await request.json()
+  const { teacherId, question, answer, difficulty, domain, grade, hints, strategies } = await request.json()
 
   if (!teacherId || !question || !answer) {
     return NextResponse.json(
@@ -27,7 +27,9 @@ export async function POST(request: NextRequest) {
     answer,
     difficulty || 3,
     domain,
-    grade
+    grade,
+    hints || [],
+    strategies || null
   )
 
   if (!exercise) {

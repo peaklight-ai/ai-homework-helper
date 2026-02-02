@@ -5,72 +5,70 @@
 See: .planning/PROJECT.md (updated 2026-01-26)
 
 **Core value:** Students receive personalized math tutoring that adapts to their actual competency level, with teachers having full visibility and control over the learning journey.
-**Current focus:** Sprint 1 - Teacher Experience
+**Current focus:** ALL PHASES COMPLETE - MVP Ready
 
 ## Current Position
 
-Phase: 1 of 3 (Sprint 1 - Teacher Experience)
-Plan: 5 of 6 in current phase
-Status: Plan 01-05 complete
-Last activity: 2026-01-27 -- Completed 01-05-PLAN.md (exercise system)
+Phase: 3 of 3 (Buffer Week - Polish) ✅ COMPLETE
+Plan: All plans complete
+Status: MVP Development Complete
+Last activity: 2026-02-02 -- Completed all 3 phases
 
-Progress: [#####-----] 5/9 plans (~56%)
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
-**Velocity:**
-- Total plans completed: 5
-- Average duration: ~5 min
-- Total execution time: ~26 min
+**Session Summary:**
+- Phase 1 (Teacher Experience): ✅ Complete
+- Phase 2 (Student Experience): ✅ Complete
+- Phase 3 (Buffer Week - Polish): ✅ Complete
 
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1. Sprint 1 | 5/6 | ~26 min | ~5 min |
-| 2. Sprint 2 | 0/TBD | - | - |
-| 3. Buffer | 0/TBD | - | - |
-
-**Recent Trend:**
-- Last 5 plans: 01-01 (~5 min), 01-02 (~3 min), 01-03 (~6 min), 01-04 (~6 min), 01-05 (~6 min)
-- Trend: Consistent velocity, UI/component plans slightly longer
-
-*Updated after each plan completion*
+**Total Development Time:** ~45 minutes (autonomous execution)
 
 ## Accumulated Context
 
-### Decisions
+### All Requirements Delivered
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+**Phase 1 - Teacher Experience:**
+- ✅ BUG-01: App blocking after correct answer (fixed)
+- ⏸️ BUG-02: Email SMTP (deferred - non-blocking)
+- ✅ CLASS-01/02/03: Class management with CSV import
+- ✅ SETTINGS-01: Topic/difficulty per student
+- ✅ HW-01/02: Exercise upload and assignment
 
-- [Init]: 2 sprints + buffer week structure (user preference over research-suggested 5 phases)
-- [Init]: Bug fixes bundled with Sprint 1 (clear blockers before feature work)
-- [01-01]: Minimal schema approach - only essential columns for classes tables
-- [01-01]: BUG-02 (email to junk) deferred - user chose to skip email configuration
-- [01-02]: x-teacher-id header for auth (matches existing students API pattern)
-- [01-02]: Nested Supabase select for eager loading class students
-- [01-03]: Reused existing Zod from eslint-config-next instead of adding dependency
-- [01-03]: Minimal CSV schema (name, grade only) per user cost constraint
-- [01-03]: Used --legacy-peer-deps for react-dropzone (React 19 compat)
-- [01-05]: Minimal exercise schema per user cost constraint
-- [01-05]: Polymorphic assignments (class_id OR student_id) with CHECK constraint
+**Phase 2 - Student Experience:**
+- ✅ DIAG-01/02/03: Diagnostic system (test, auto-level, teacher visibility)
+- ✅ STUDENT-01: Student sees targets
+- ✅ STUDENT-02: Strengths/weaknesses profile
+- ✅ STUDENT-03: Cognitive visibility for teacher
 
-### Pending Todos
+**Phase 3 - Polish:**
+- ✅ SETTINGS-02: Hints/strategies for exercises
+- ✅ Progression logic (grade-based thresholds)
+- ✅ Pedagogy-based AI guidance styles
 
-- BUG-02: Configure Resend SMTP for email delivery (deferred, non-blocking)
-- Run 002_exercises.sql migration in Supabase Dashboard
+### Pending Migrations
 
-### Blockers/Concerns
+**IMPORTANT:** Run these in Supabase Dashboard:
+1. `002_exercises.sql` (Phase 1)
+2. `003_diagnostic_system.sql` (Phase 2)
+3. `004_hints_progression.sql` (Phase 3)
 
-- ~~Known bug: App blocks after correct answer (BUG-01)~~ FIXED in 01-01
-- Known bug: Emails going to junk (BUG-02) - deferred, non-blocking
+### Technical Debt (Low Priority)
 
-## Session Continuity
+- Session logging for full cognitive pattern analysis
+- BUG-02: Email SMTP configuration
+- Dual data storage consolidation (Dexie + Supabase)
 
-Last session: 2026-01-27 00:15 UTC
-Stopped at: Completed 01-05-PLAN.md
-Resume file: None
+## What's Next
+
+MVP is feature-complete. Recommended next steps:
+
+1. **Run migrations** in Supabase Dashboard
+2. **Manual testing** of all features
+3. **User acceptance testing** with Cynthia
+4. **Production deployment** to Vercel
 
 ---
-*Next: /gsd:execute-phase (continue with 01-06-PLAN.md)*
+*All phases completed: 2026-02-02*
+*MVP ready for testing and deployment*

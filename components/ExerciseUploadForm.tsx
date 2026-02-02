@@ -14,6 +14,9 @@ export function ExerciseUploadForm({ teacherId, onExerciseCreated }: ExerciseUpl
   const [difficulty, setDifficulty] = useState<number>(3)
   const [domain, setDomain] = useState('')
   const [grade, setGrade] = useState<number | ''>('')
+  const [hints, setHints] = useState<string[]>([''])
+  const [strategies, setStrategies] = useState('')
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -26,6 +29,9 @@ export function ExerciseUploadForm({ teacherId, onExerciseCreated }: ExerciseUpl
     setError(null)
     setSuccess(false)
 
+    // Filter out empty hints
+    const validHints = hints.filter(h => h.trim())
+
     try {
       const response = await fetch('/api/exercises', {
         method: 'POST',
@@ -36,7 +42,9 @@ export function ExerciseUploadForm({ teacherId, onExerciseCreated }: ExerciseUpl
           answer: answer.trim(),
           difficulty,
           domain: domain.trim() || null,
-          grade: grade || null
+          grade: grade || null,
+          hints: validHints,
+          strategies: strategies.trim() || null
         })
       })
 
@@ -51,6 +59,8 @@ export function ExerciseUploadForm({ teacherId, onExerciseCreated }: ExerciseUpl
       setDifficulty(3)
       setDomain('')
       setGrade('')
+      setHints([''])
+      setStrategies('')
       setSuccess(true)
       onExerciseCreated()
 
@@ -60,6 +70,24 @@ export function ExerciseUploadForm({ teacherId, onExerciseCreated }: ExerciseUpl
       setError(err instanceof Error ? err.message : 'Failed to create exercise')
     } finally {
       setIsCreating(false)
+    }
+  }
+
+  const addHint = () => {
+    if (hints.length < 5) {
+      setHints([...hints, ''])
+    }
+  }
+
+  const updateHint = (index: number, value: string) => {
+    const newHints = [...hints]
+    newHints[index] = value
+    setHints(newHints)
+  }
+
+  const removeHint = (index: number) => {
+    if (hints.length > 1) {
+      setHints(hints.filter((_, i) => i !== index))
     }
   }
 
@@ -175,6 +203,84 @@ export function ExerciseUploadForm({ teacherId, onExerciseCreated }: ExerciseUpl
             </select>
           </div>
         </div>
+
+        {/* Advanced Options Toggle */}
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="text-sm flex items-center gap-2 transition-colors"
+          style={{ color: '#38BDF8' }}
+        >
+          <span>{showAdvanced ? '▼' : '▶'}</span>
+          Hints & Strategies (optional)
+        </button>
+
+        {showAdvanced && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="space-y-4 pt-2"
+          >
+            {/* Hints */}
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: '#94A3B8' }}>
+                Hints (shown progressively to students)
+              </label>
+              <div className="space-y-2">
+                {hints.map((hint, index) => (
+                  <div key={index} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={hint}
+                      onChange={(e) => updateHint(index, e.target.value)}
+                      placeholder={`Hint ${index + 1}: e.g., "Try breaking down 24 into 20 + 4"`}
+                      className="flex-1 px-3 py-2 rounded-lg focus:outline-none text-sm"
+                      style={{ backgroundColor: '#1E293B', color: '#F9FAFB', border: '1px solid #64748B' }}
+                    />
+                    {hints.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeHint(index)}
+                        className="px-3 py-2 rounded-lg text-sm"
+                        style={{ backgroundColor: '#1E293B', color: '#FB7185' }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {hints.length < 5 && (
+                <button
+                  type="button"
+                  onClick={addHint}
+                  className="mt-2 text-sm px-3 py-1 rounded-lg"
+                  style={{ backgroundColor: '#1E293B', color: '#38BDF8' }}
+                >
+                  + Add Hint
+                </button>
+              )}
+            </div>
+
+            {/* Teaching Strategies */}
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: '#94A3B8' }}>
+                Teaching Strategy (for AI tutor)
+              </label>
+              <textarea
+                value={strategies}
+                onChange={(e) => setStrategies(e.target.value)}
+                placeholder="e.g., For this problem, encourage the student to use place value thinking. Break the numbers into tens and ones."
+                rows={2}
+                className="w-full px-3 py-2 rounded-lg focus:outline-none text-sm"
+                style={{ backgroundColor: '#1E293B', color: '#F9FAFB', border: '1px solid #64748B' }}
+              />
+              <p className="text-xs mt-1" style={{ color: '#64748B' }}>
+                This guides how the AI helps the student solve this problem.
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         <button
           type="submit"

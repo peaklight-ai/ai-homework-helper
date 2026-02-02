@@ -6,6 +6,9 @@ import Link from 'next/link'
 import { Conversation } from '@/components/Conversation'
 import { Avatar } from '@/components/Avatar'
 import { StudentLogin } from '@/components/StudentLogin'
+import { DiagnosticTest } from '@/components/DiagnosticTest'
+import { StudentTargets } from '@/components/StudentTargets'
+import { StudentProfile } from '@/components/StudentProfile'
 import { getRandomProblem, getProblemsByGrade, sampleProblems, MathProblem } from '@/lib/sampleProblems'
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar'
 import 'react-circular-progressbar/dist/styles.css'
@@ -50,6 +53,9 @@ export default function Home() {
 
   // XP Goal (from localStorage, synced with teacher dashboard)
   const [xpGoal, setXpGoal] = useState(100)
+
+  // Diagnostic state
+  const [needsDiagnostic, setNeedsDiagnostic] = useState(false)
 
   // Check for existing session on mount
   useEffect(() => {
@@ -103,7 +109,7 @@ export default function Home() {
     loadSession()
   }, [])
 
-  const handleLogin = (studentData: StudentData, progressData: ProgressData, settingsData: SettingsData) => {
+  const handleLogin = async (studentData: StudentData, progressData: ProgressData, settingsData: SettingsData) => {
     setStudent(studentData)
     setProgress(progressData)
     setSettings(settingsData)
@@ -113,6 +119,27 @@ export default function Home() {
     localStorage.setItem('studentId', studentData.id)
     localStorage.setItem('studentName', studentData.name)
     localStorage.setItem('studentData', JSON.stringify(studentData))
+
+    // Check if student needs diagnostic test
+    try {
+      const response = await fetch(`/api/diagnostic?studentId=${studentData.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        if (!data.hasDiagnostic) {
+          setNeedsDiagnostic(true)
+        }
+      }
+    } catch (error) {
+      console.error('Error checking diagnostic status:', error)
+    }
+  }
+
+  const handleDiagnosticComplete = (results: { overallLevel: number }) => {
+    setNeedsDiagnostic(false)
+    // Update settings with new difficulty level
+    if (settings) {
+      setSettings({ ...settings, difficultyLevel: results.overallLevel })
+    }
   }
 
   const handleLogout = () => {
@@ -240,6 +267,18 @@ export default function Home() {
     return <StudentLogin onLogin={handleLogin} />
   }
 
+  // Needs diagnostic test - show diagnostic
+  if (needsDiagnostic) {
+    return (
+      <DiagnosticTest
+        studentId={student.id}
+        studentName={student.name}
+        grade={student.grade}
+        onComplete={handleDiagnosticComplete}
+      />
+    )
+  }
+
   // Game mode - solving problems
   if (started) {
     return (
@@ -319,6 +358,7 @@ export default function Home() {
           key={problem.id}
           problem={problem}
           childName={student.name}
+          studentGrade={student.grade}
           onComplete={handleComplete}
           onNewProblem={handleNewProblem}
         />
@@ -461,6 +501,12 @@ export default function Home() {
               </motion.p>
             )}
           </motion.div>
+
+          {/* Targets and Profile */}
+          <div className="space-y-4 mb-6">
+            <StudentTargets studentId={student.id} compact />
+            <StudentProfile studentId={student.id} compact />
+          </div>
 
           {/* Big CTA Button */}
           <motion.button

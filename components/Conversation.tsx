@@ -14,11 +14,14 @@ interface Message {
 interface ConversationProps {
   problem: MathProblem
   childName?: string
+  studentGrade?: number
+  hints?: string[]
+  strategies?: string
   onComplete?: (xpEarned: number) => void
   onNewProblem?: () => void
 }
 
-export function Conversation({ problem, childName = 'Student', onComplete, onNewProblem }: ConversationProps) {
+export function Conversation({ problem, childName = 'Student', studentGrade = 3, hints = [], strategies, onComplete, onNewProblem }: ConversationProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'model',
@@ -92,7 +95,10 @@ export function Conversation({ problem, childName = 'Student', onComplete, onNew
         body: JSON.stringify({
           userMessage: userInput,
           problem,
-          conversationHistory: messages
+          conversationHistory: messages,
+          studentGrade,
+          hints,
+          strategies
         })
       })
 

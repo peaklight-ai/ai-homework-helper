@@ -11,6 +11,8 @@ import { CreateClassModal } from '@/components/CreateClassModal'
 import { CSVImportModal } from '@/components/CSVImportModal'
 import { ExerciseUploadForm } from '@/components/ExerciseUploadForm'
 import { ExerciseAssignmentModal } from '@/components/ExerciseAssignmentModal'
+import { StudentTargets } from '@/components/StudentTargets'
+import { StudentProfile } from '@/components/StudentProfile'
 import { ClassWithStudents, Exercise } from '@/lib/supabase'
 
 // =============================================================================
@@ -799,6 +801,23 @@ export default function TeacherDashboard() {
                     <span style={{ color: '#94A3B8' }}>Current Streak</span>
                     <span className="font-medium" style={{ color: '#FB7185' }}>{selectedStudentData.progress.currentStreak}</span>
                   </div>
+                </div>
+
+                {/* Student Targets */}
+                <div className="rounded-lg p-4" style={{ backgroundColor: '#0F172A' }}>
+                  <StudentTargets
+                    studentId={selectedStudentData.id}
+                    showAddButton
+                    teacherId={user?.id}
+                  />
+                </div>
+
+                {/* Student Profile - Mastery & Cognitive Insights */}
+                <div className="rounded-lg p-4" style={{ backgroundColor: '#0F172A' }}>
+                  <h3 className="font-bold mb-3 flex items-center gap-2" style={{ color: '#F9FAFB' }}>
+                    <span>🧠</span> Learning Profile
+                  </h3>
+                  <StudentProfile studentId={selectedStudentData.id} />
                 </div>
               </motion.div>
             )}

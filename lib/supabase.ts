@@ -111,6 +111,20 @@ export interface Exercise {
   difficulty: 1 | 2 | 3 | 4 | 5
   domain: string | null
   grade: 1 | 2 | 3 | 4 | 5 | 6 | null
+  hints: string[]
+  strategies: string | null
+  created_at: string
+}
+
+export interface ProgressionRule {
+  id: string
+  teacher_id: string | null
+  correct_streak_for_up: number
+  wrong_streak_for_down: number
+  min_difficulty: number
+  max_difficulty: number
+  grade: 1 | 2 | 3 | 4 | 5 | 6 | null
+  guidance_style: 'guided' | 'scaffold' | 'coach'
   created_at: string
 }
 
@@ -121,6 +135,83 @@ export interface ExerciseAssignment {
   student_id: string | null
   due_date: string | null
   assigned_at: string
+}
+
+// =============================================================================
+// PHASE 2: DIAGNOSTIC & ANALYTICS TYPES
+// =============================================================================
+
+export interface DiagnosticTest {
+  id: string
+  student_id: string
+  started_at: string
+  completed_at: string | null
+  status: 'in_progress' | 'completed' | 'abandoned'
+  results: Record<string, { correct: number; total: number; avgTime: number }>
+  recommended_levels: Record<string, number>
+}
+
+export interface DiagnosticQuestion {
+  id: string
+  grade: 1 | 2 | 3 | 4 | 5 | 6
+  domain: string
+  difficulty: 1 | 2 | 3 | 4 | 5
+  question: string
+  answer: string
+  hints: string[]
+  created_at: string
+}
+
+export interface DiagnosticResponse {
+  id: string
+  test_id: string
+  question_id: string
+  student_answer: string | null
+  is_correct: boolean
+  time_seconds: number | null
+  created_at: string
+}
+
+export interface SessionLog {
+  id: string
+  student_id: string
+  problem_question: string
+  problem_domain: string | null
+  conversation: Array<{ role: 'user' | 'assistant'; content: string }>
+  outcome: 'correct' | 'incorrect' | 'abandoned' | 'helped'
+  duration_seconds: number | null
+  hints_used: number
+  ai_observations: string | null
+  created_at: string
+}
+
+export interface TopicMastery {
+  id: string
+  student_id: string
+  topic: string
+  attempts: number
+  correct: number
+  avg_time_seconds: number | null
+  last_attempt: string | null
+}
+
+export interface StudentTarget {
+  id: string
+  student_id: string
+  teacher_id: string
+  target_text: string
+  target_type: 'skill' | 'xp' | 'streak' | 'mastery'
+  target_value: Record<string, unknown> | null
+  due_date: string | null
+  completed: boolean
+  completed_at: string | null
+  created_at: string
+}
+
+// Extended Student type with diagnostic info
+export interface StudentWithDiagnostic extends Student {
+  has_diagnostic: boolean
+  diagnostic_completed_at: string | null
 }
 
 // =============================================================================
@@ -462,7 +553,9 @@ export async function getClassesByTeacher(teacherId: string): Promise<ClassWithS
         .select('student_id, students(*)')
         .eq('class_id', c.id)
 
-      const students = enrollments?.map((e: { students: Student }) => e.students).filter(Boolean) || []
+      const students = enrollments?.map((e: { students: Student | Student[] }) =>
+        Array.isArray(e.students) ? e.students[0] : e.students
+      ).filter(Boolean) || []
 
       return {
         ...c,
@@ -594,7 +687,9 @@ export async function createExercise(
   answer: string,
   difficulty: 1 | 2 | 3 | 4 | 5 = 3,
   domain?: string,
-  grade?: 1 | 2 | 3 | 4 | 5 | 6
+  grade?: 1 | 2 | 3 | 4 | 5 | 6,
+  hints: string[] = [],
+  strategies?: string | null
 ): Promise<Exercise | null> {
   const supabase = createServerSupabaseClient()
   const { data, error } = await supabase
@@ -605,7 +700,9 @@ export async function createExercise(
       answer,
       difficulty,
       domain: domain || null,
-      grade: grade || null
+      grade: grade || null,
+      hints: hints || [],
+      strategies: strategies || null
     })
     .select()
     .single()
