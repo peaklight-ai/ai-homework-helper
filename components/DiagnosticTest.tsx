@@ -77,14 +77,16 @@ export function DiagnosticTest({ studentId, studentName, grade, onComplete }: Di
         setTimeout(async () => {
           setFeedback(null)
           setAnswer('')
-          setQuestionNumber(prev => prev + 1)
+          const nextNum = questionNumber + 1
+          setQuestionNumber(nextNum)
 
-          if (data.nextQuestion) {
-            setCurrentQuestion(data.nextQuestion)
-            setStartTime(Date.now())
-          } else {
+          // Hard limit: complete after totalQuestions regardless of API response
+          if (!data.nextQuestion || nextNum >= totalQuestions) {
             // Complete the test
             await completeTest()
+          } else {
+            setCurrentQuestion(data.nextQuestion)
+            setStartTime(Date.now())
           }
         }, 1500)
       }

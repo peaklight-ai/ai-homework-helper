@@ -415,8 +415,44 @@ export async function updateStudentProgress(
   return true
 }
 
+// Helper to ensure progress record exists
+async function ensureProgressRecord(studentId: string): Promise<Progress | null> {
+  console.log('[ensureProgressRecord] Checking for student:', studentId)
+  let progress = await getStudentProgress(studentId)
+
+  if (!progress) {
+    console.log('[ensureProgressRecord] No progress found, creating new record')
+    // Create progress record if it doesn't exist
+    const supabase = createServerSupabaseClient()
+    const { data, error } = await supabase
+      .from('progress')
+      .insert({
+        student_id: studentId,
+        total_xp: 0,
+        level: 1,
+        current_streak: 0,
+        longest_streak: 0,
+        total_questions: 0,
+        correct_answers: 0
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('[ensureProgressRecord] Error creating progress record:', error)
+      return null
+    }
+    console.log('[ensureProgressRecord] Created progress record:', data)
+    progress = data
+  } else {
+    console.log('[ensureProgressRecord] Found existing progress:', progress)
+  }
+
+  return progress
+}
+
 export async function addXpToStudent(studentId: string, xp: number): Promise<boolean> {
-  const progress = await getStudentProgress(studentId)
+  const progress = await ensureProgressRecord(studentId)
   if (!progress) return false
 
   const newXp = progress.total_xp + xp
@@ -429,7 +465,7 @@ export async function addXpToStudent(studentId: string, xp: number): Promise<boo
 }
 
 export async function recordStudentAnswer(studentId: string, isCorrect: boolean): Promise<boolean> {
-  const progress = await getStudentProgress(studentId)
+  const progress = await ensureProgressRecord(studentId)
   if (!progress) return false
 
   const newStreak = isCorrect ? progress.current_streak + 1 : 0

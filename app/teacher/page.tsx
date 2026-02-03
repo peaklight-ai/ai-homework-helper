@@ -13,6 +13,7 @@ import { ExerciseUploadForm } from '@/components/ExerciseUploadForm'
 import { ExerciseAssignmentModal } from '@/components/ExerciseAssignmentModal'
 import { StudentTargets } from '@/components/StudentTargets'
 import { StudentProfile } from '@/components/StudentProfile'
+import { TeacherInsights } from '@/components/TeacherInsights'
 import { ClassWithStudents, Exercise } from '@/lib/supabase'
 
 // =============================================================================
@@ -461,6 +462,24 @@ export default function TeacherDashboard() {
             ))}
           </div>
         </motion.div>
+
+        {/* Teacher Insights - Today's Focus */}
+        {user && (
+          <motion.div
+            className="mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <TeacherInsights
+              teacherId={user.id}
+              onStudentClick={(studentId) => {
+                setSelectedStudent(studentId)
+                setActiveTab('students')
+              }}
+            />
+          </motion.div>
+        )}
 
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-6">

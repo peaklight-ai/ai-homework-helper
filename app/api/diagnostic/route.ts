@@ -140,18 +140,23 @@ export async function POST(request: NextRequest) {
       const matchedQuestion = diagnosticQuestions.find(q => q.question === questionId)
 
       if (!matchedQuestion) {
-        // Try to find by grade/domain combination from the request
-        const { data: responses } = await supabase
-          .from('diagnostic_responses')
-          .select('*')
-          .eq('test_id', test.id)
+        // Question not found in our data - record response anyway to advance test
+        const isCorrect = false // Mark as incorrect since we can't verify
 
-        // Just record the answer
-        const isCorrect = answer.toString().toLowerCase().trim() ===
-          diagnosticQuestions.find(q => q.question === questionId)?.answer.toLowerCase().trim()
+        // Record response to advance the count
+        await supabase
+          .from('diagnostic_responses')
+          .insert({
+            test_id: test.id,
+            question_id: test.id,
+            student_answer: answer.toString(),
+            is_correct: isCorrect,
+            time_seconds: timeSeconds || null
+          })
 
         return NextResponse.json({
           isCorrect,
+          correctAnswer: 'Unknown',
           nextQuestion: await getNextQuestion(supabase, test.id, student.grade)
         })
       }
@@ -283,6 +288,12 @@ async function getNextQuestion(
   const responseCount = responses?.length || 0
   const domains = getDomainsForGrade(grade)
   const questionsPerDomain = 3 // Ask 3 questions per domain
+  const maxQuestions = domains.length * questionsPerDomain
+
+  // HARD LIMIT: Stop after max questions regardless
+  if (responseCount >= maxQuestions) {
+    return null
+  }
 
   // Calculate which domain we're on
   const currentDomainIndex = Math.floor(responseCount / questionsPerDomain)
