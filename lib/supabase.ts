@@ -382,6 +382,79 @@ export async function deleteStudent(studentId: string): Promise<boolean> {
   return true
 }
 
+// STUDENT-01, STUDENT-02: Update student name and grade
+export async function updateStudent(
+  studentId: string,
+  updates: {
+    name?: string
+    grade?: 1 | 2 | 3 | 4 | 5 | 6
+  }
+): Promise<Student | null> {
+  const supabase = createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from('students')
+    .update(updates)
+    .eq('id', studentId)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error updating student:', error)
+    return null
+  }
+  return data
+}
+
+// STUDENT-03: Change student's class
+export async function changeStudentClass(
+  studentId: string,
+  oldClassId: string | null,
+  newClassId: string | null
+): Promise<boolean> {
+  const supabase = createServerSupabaseClient()
+
+  // Remove from old class if exists
+  if (oldClassId) {
+    const { error: unenrollError } = await supabase
+      .from('class_students')
+      .delete()
+      .eq('student_id', studentId)
+      .eq('class_id', oldClassId)
+
+    if (unenrollError) {
+      console.error('Error removing from old class:', unenrollError)
+      return false
+    }
+  }
+
+  // Add to new class if specified
+  if (newClassId) {
+    const { error: enrollError } = await supabase
+      .from('class_students')
+      .insert({ class_id: newClassId, student_id: studentId })
+
+    if (enrollError) {
+      console.error('Error adding to new class:', enrollError)
+      return false
+    }
+  }
+
+  return true
+}
+
+// Get the class a student belongs to
+export async function getStudentClassId(studentId: string): Promise<string | null> {
+  const supabase = createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from('class_students')
+    .select('class_id')
+    .eq('student_id', studentId)
+    .single()
+
+  if (error) return null
+  return data?.class_id || null
+}
+
 // =============================================================================
 // PROGRESS FUNCTIONS
 // =============================================================================

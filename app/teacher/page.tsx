@@ -15,6 +15,7 @@ import { StudentTargets } from '@/components/StudentTargets'
 import { StudentProfile } from '@/components/StudentProfile'
 import { TeacherInsights } from '@/components/TeacherInsights'
 import { AssignedExercises } from '@/components/AssignedExercises'
+import { EditStudentModal } from '@/components/EditStudentModal'
 import { ClassWithStudents, Exercise } from '@/lib/supabase'
 
 // =============================================================================
@@ -71,6 +72,9 @@ export default function TeacherDashboard() {
   const [showSettings, setShowSettings] = useState(false)
   const [editingSettings, setEditingSettings] = useState<StudentSettings | null>(null)
   const [isSavingSettings, setIsSavingSettings] = useState(false)
+
+  // Edit student modal (Phase 5 - Student Management)
+  const [showEditStudent, setShowEditStudent] = useState(false)
 
   // Class management
   const [classes, setClasses] = useState<ClassWithStudents[]>([])
@@ -708,6 +712,13 @@ export default function TeacherDashboard() {
                   </div>
                   <div className="flex gap-2">
                     <button
+                      onClick={() => setShowEditStudent(true)}
+                      className="px-3 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105"
+                      style={{ backgroundColor: '#1E293B', color: '#BB8CFC', border: '1px solid #BB8CFC' }}
+                    >
+                      Edit
+                    </button>
+                    <button
                       onClick={() => {
                         setEditingSettings({ ...selectedStudentData.settings })
                         setShowSettings(true)
@@ -1041,6 +1052,23 @@ export default function TeacherDashboard() {
           onAssigned={() => {
             setShowAssignModal(false)
             setSelectedExercise(null)
+          }}
+        />
+      )}
+
+      {/* Edit Student Modal (Phase 5 - Student Management) */}
+      {showEditStudent && selectedStudentData && (
+        <EditStudentModal
+          student={selectedStudentData}
+          classes={classes}
+          currentClassId={
+            classes.find(c => c.students?.some(s => s.id === selectedStudentData.id))?.id || null
+          }
+          onClose={() => setShowEditStudent(false)}
+          onSaved={() => {
+            setShowEditStudent(false)
+            fetchStudents()
+            fetchClasses()
           }}
         />
       )}

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient, createStudent, deleteStudent } from '@/lib/supabase'
+import { createServerSupabaseClient, createStudent, deleteStudent, updateStudent, changeStudentClass, getStudentClassId } from '@/lib/supabase'
 
 // =============================================================================
 // STUDENTS API
 // =============================================================================
 // GET: List all students for the logged-in teacher
 // POST: Create a new student
+// PUT: Update a student (name, grade, class)
 // DELETE: Delete a student
 // =============================================================================
 
@@ -106,6 +107,48 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Create student error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// STUDENT-01, STUDENT-02, STUDENT-03: Update student name, grade, and class
+export async function PUT(request: NextRequest) {
+  try {
+    const { studentId, name, grade, newClassId, oldClassId } = await request.json()
+
+    if (!studentId) {
+      return NextResponse.json({ error: 'Student ID is required' }, { status: 400 })
+    }
+
+    // Update name and/or grade if provided
+    if (name !== undefined || grade !== undefined) {
+      const updates: { name?: string; grade?: 1 | 2 | 3 | 4 | 5 | 6 } = {}
+      if (name !== undefined) updates.name = name
+      if (grade !== undefined) updates.grade = grade
+
+      const updatedStudent = await updateStudent(studentId, updates)
+      if (!updatedStudent) {
+        return NextResponse.json({ error: 'Failed to update student' }, { status: 500 })
+      }
+    }
+
+    // Handle class change if requested (STUDENT-03)
+    if (newClassId !== undefined) {
+      // Get current class if not provided
+      const currentClassId = oldClassId ?? await getStudentClassId(studentId)
+
+      // Only change if actually different
+      if (currentClassId !== newClassId) {
+        const classChanged = await changeStudentClass(studentId, currentClassId, newClassId)
+        if (!classChanged) {
+          return NextResponse.json({ error: 'Failed to change student class' }, { status: 500 })
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Update student error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
