@@ -38,7 +38,7 @@
 
 ### Feature Deployment
 
-- [ ] **DEPLOY-01**: Run Topic Mastery database migration (003_diagnostic_system.sql)
+- [ ] **DEPLOY-01**: Run Topic Mastery database migration
 - [ ] **DEPLOY-02**: Run Cognitive Visibility database migration
 - [ ] **DEPLOY-03**: Verify Topic Mastery UI displays correctly with real data
 - [ ] **DEPLOY-04**: Verify Cognitive Visibility UI displays correctly with real data
@@ -73,33 +73,33 @@
 
 ## Traceability
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| BUG-01 | Phase 1 | Pending |
-| BUG-02 | Phase 1 | Pending |
-| BUG-03 | Phase 1 | Pending |
-| BUG-04 | Phase 1 | Pending |
-| BUG-05 | Phase 1 | Pending |
-| BUG-06 | Phase 1 | Pending |
-| VIS-01 | Phase 2 | Pending |
-| VIS-02 | Phase 2 | Pending |
-| VIS-03 | Phase 2 | Pending |
-| VIS-04 | Phase 2 | Pending |
-| CONTENT-01 | Phase 3 | Pending |
-| CONTENT-02 | Phase 3 | Pending |
-| CONTENT-03 | Phase 3 | Pending |
-| CONTENT-04 | Phase 3 | Pending |
-| CONTENT-05 | Phase 3 | Pending |
-| CONTENT-06 | Phase 3 | Pending |
-| STUDENT-01 | Phase 4 | Pending |
-| STUDENT-02 | Phase 4 | Pending |
-| STUDENT-03 | Phase 4 | Pending |
-| DEPLOY-01 | Phase 5 | Pending |
-| DEPLOY-02 | Phase 5 | Pending |
-| DEPLOY-03 | Phase 5 | Pending |
-| DEPLOY-04 | Phase 5 | Pending |
-| AI-01 | Phase 6 | Pending |
-| AI-02 | Phase 6 | Pending |
+| Requirement | Description | Phase | Status |
+|-------------|-------------|-------|--------|
+| BUG-01 | Fix "Failed to create exercise" error | Phase 1 | Pending |
+| BUG-02 | Fix assigned exercises not in student profile | Phase 1 | Pending |
+| BUG-03 | Fix assigned exercises not in teacher dashboard | Phase 1 | Pending |
+| BUG-04 | Fix quiz/diagnostic performance | Phase 1 | Pending |
+| BUG-05 | Fix answer box color visibility | Phase 1 | Pending |
+| BUG-06 | Show student grade next to name | Phase 1 | Pending |
+| DEPLOY-01 | Run Topic Mastery migration | Phase 2 | Pending |
+| DEPLOY-02 | Run Cognitive Visibility migration | Phase 2 | Pending |
+| DEPLOY-03 | Verify Topic Mastery UI | Phase 2 | Pending |
+| DEPLOY-04 | Verify Cognitive Visibility UI | Phase 2 | Pending |
+| VIS-01 | Teacher views diagnostic results | Phase 3 | Pending |
+| VIS-02 | Teacher views exercise results | Phase 3 | Pending |
+| VIS-03 | Hide hints from students | Phase 3 | Pending |
+| VIS-04 | Hide target strategy from students | Phase 3 | Pending |
+| CONTENT-01 | Add subtraction to diagnostic | Phase 4 | Pending |
+| CONTENT-02 | Add multiplication to diagnostic | Phase 4 | Pending |
+| CONTENT-03 | Add division to diagnostic | Phase 4 | Pending |
+| CONTENT-04 | Add word problems to diagnostic | Phase 4 | Pending |
+| CONTENT-05 | Grade-level filtering for diagnostic | Phase 4 | Pending |
+| CONTENT-06 | Document level determination algorithm | Phase 4 | Pending |
+| STUDENT-01 | Teacher edits student name | Phase 5 | Pending |
+| STUDENT-02 | Teacher edits student grade | Phase 5 | Pending |
+| STUDENT-03 | Teacher changes student class | Phase 5 | Pending |
+| AI-01 | AI reads student target at session start | Phase 6 | Pending |
+| AI-02 | AI adapts teaching to target goal | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 24 total
@@ -108,4 +108,4 @@
 
 ---
 *Requirements defined: 2026-02-03*
-*Phase mapping: 2026-02-03*
+*Phase mapping updated: 2026-02-04*
