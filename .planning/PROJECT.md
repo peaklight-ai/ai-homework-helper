@@ -8,6 +8,22 @@ A gamified, Socratic math tutoring app for primary school children (grades 1-6).
 
 **Students receive personalized math tutoring that adapts to their actual competency level, with teachers having full visibility and control over the learning journey.**
 
+## Current Milestone: v2.3.0 PM Feedback Fixes
+
+**Goal:** Fix all bugs from PM testing, deploy pending features, improve quiz content quality, and ensure teacher-student data synchronization.
+
+**Target features:**
+- Fix exercise upload bug ("Failed to create exercise")
+- Fix assigned exercises visibility (student + teacher views)
+- Deploy Topic Mastery and Cognitive Visibility (run migrations)
+- Improve quiz/diagnostic content (all grades, all domains, problem-solving)
+- Enable teacher to see all results (diagnostic + exercises)
+- Add student info editing capability
+- Integrate AI with student targets for personalized teaching
+- Fix UI issues (answer box color, grade display, performance)
+
+---
+
 ## Requirements
 
 ### Validated
@@ -27,29 +43,35 @@ A gamified, Socratic math tutoring app for primary school children (grades 1-6).
 
 ### Active
 
-<!-- Sprint 1: Teacher Experience -->
+<!-- v2.3.0: PM Feedback Fixes -->
 
-- [ ] Fix app blocking interaction after correct answer (bug)
-- [ ] Fix email configuration (emails going to junk)
-- [ ] Teacher can upload class list (bulk import)
-- [ ] Students organized by class (not mixed lists)
-- [ ] Teacher settings: topic, difficulty level, hints/strategies
-- [ ] Teacher can upload homework by grade/class/student
-- [ ] Teacher can assign exercises to specific students
+**Bug Fixes:**
+- [ ] Fix "Failed to create exercise" bug in exercise upload
+- [ ] Fix assigned exercises not showing in student profile
+- [ ] Fix assigned exercises not showing in teacher profile
+- [ ] Fix quiz/diagnostic performance (too slow)
+- [ ] Fix answer box color visibility issue
+- [ ] Show student grade next to name in UI
 
-<!-- Sprint 2: Student Experience & Analytics -->
+**Data Visibility & Sync:**
+- [ ] Teacher can see diagnostic test results
+- [ ] Teacher can see exercise completion results
+- [ ] Hide hints/targets from student view (teacher-only)
+- [ ] Sync teacher and student profile data
 
-- [ ] Diagnostic test administered on student's first login
-- [ ] Diagnostic sets student's initial level automatically
-- [ ] Diagnostic results sent to teacher
-- [ ] Student can see their targets/objectives (set by teacher)
-- [ ] Dynamic strengths/weaknesses profile per student
-- [ ] Teacher can view how student reasons and functions cognitively
+**Content Quality:**
+- [ ] Expand quiz questions beyond addition (all 4 operations)
+- [ ] Add problem-solving questions (not just equations)
+- [ ] Ensure questions are grade-appropriate (grades 1-6)
+- [ ] Document how student level is determined
 
-<!-- Buffer Week: Polish -->
+**Missing Features:**
+- [ ] Teacher can update student info after creation
+- [ ] Deploy Topic Mastery feature (run migration)
+- [ ] Deploy Cognitive Visibility feature (run migration)
 
-- [ ] Teacher can upload hints/strategies linked to exercises
-- [ ] Progression logic refinement (Yusef's review pack reference)
+**AI Enhancement:**
+- [ ] AI tutor uses student targets to customize teaching approach
 
 ### Out of Scope
 
@@ -101,4 +123,4 @@ A gamified, Socratic math tutoring app for primary school children (grades 1-6).
 | Diagnostic test on first login | Sets proper starting level | — Pending |
 
 ---
-*Last updated: 2026-01-26 after initialization*
+*Last updated: 2026-02-03 after v2.3.0 milestone initialization*
