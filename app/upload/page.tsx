@@ -278,6 +278,8 @@ export default function UploadPage() {
             <Conversation
               problem={customProblem}
               childName={student.name}
+              studentId={student.id}
+              studentGrade={student.grade}
               onComplete={handleComplete}
               key={customProblem.question}
             />

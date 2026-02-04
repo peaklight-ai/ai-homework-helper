@@ -363,6 +363,7 @@ export default function Home() {
           problem={problem}
           childName={student.name}
           studentGrade={student.grade}
+          studentId={student.id}
           onComplete={handleComplete}
           onNewProblem={handleNewProblem}
         />

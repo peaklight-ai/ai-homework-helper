@@ -2,6 +2,12 @@
 // - CometAPI (production): Gemini, GPT-4, Claude
 // - Ollama (local development): llama3.1, mistral, etc.
 
+// AI-01: Student target type for AI integration
+export interface StudentTargetContext {
+  targetText: string
+  targetType: 'skill' | 'xp' | 'streak' | 'mastery'
+}
+
 export interface ConversationContext {
   problemQuestion: string
   problemAnswer: string
@@ -14,6 +20,8 @@ export interface ConversationContext {
   studentGrade?: number
   hints?: string[]
   strategies?: string
+  // Phase 6: AI Target Integration (AI-01, AI-02)
+  studentTargets?: StudentTargetContext[]
 }
 
 export interface SocraticResponse {
@@ -104,6 +112,20 @@ ${context.strategies}
 `
   }
 
+  // AI-01, AI-02: Build student targets section
+  let targetsSection = ''
+  if (context.studentTargets && context.studentTargets.length > 0) {
+    targetsSection = `
+STUDENT LEARNING TARGETS (from teacher - adapt your teaching to help achieve these):
+${context.studentTargets.map(t => `- [${t.targetType.toUpperCase()}] ${t.targetText}`).join('\n')}
+
+When teaching, keep these targets in mind and occasionally encourage progress toward them.
+For skill targets: Focus your hints and questions on that specific skill area.
+For mastery targets: Help build confidence and thorough understanding.
+For streak/XP targets: Provide extra encouragement when the student gets answers right.
+`
+  }
+
   const systemPrompt = `You are a friendly math tutor helping a Grade ${context.studentGrade || 3} student.
 
 ${instructions}
@@ -116,7 +138,7 @@ CORE RULES:
 
 CORRECT ANSWER RULE (ABSOLUTE PRIORITY):
 If the student says "${context.problemAnswer}" or equivalent, respond ONLY with "🎉 Great job!" and NOTHING ELSE. No follow-up. No questions. No explanation requests. Just celebrate and stop.
-${hintsSection}${strategiesSection}
+${hintsSection}${strategiesSection}${targetsSection}
 PROBLEM: ${context.problemQuestion}
 ANSWER: ${context.problemAnswer}`
 

@@ -967,6 +967,27 @@ export async function getExerciseResultsForStudent(studentId: string): Promise<E
   }))
 }
 
+// =============================================================================
+// AI-01: GET STUDENT TARGETS FOR AI INTEGRATION
+// =============================================================================
+
+export async function getActiveStudentTargets(studentId: string): Promise<StudentTarget[]> {
+  const supabase = createServerSupabaseClient()
+  const { data, error } = await supabase
+    .from('student_targets')
+    .select('*')
+    .eq('student_id', studentId)
+    .eq('completed', false)
+    .order('created_at', { ascending: false })
+    .limit(3) // Get most recent active targets
+
+  if (error) {
+    console.error('Error fetching student targets:', error)
+    return []
+  }
+  return data || []
+}
+
 export async function getAssignmentCompletionStats(teacherId: string): Promise<{
   totalAssigned: number
   totalCompleted: number

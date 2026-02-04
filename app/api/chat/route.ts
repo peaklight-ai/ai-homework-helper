@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server'
-import { getSocraticResponseStream } from '@/lib/gemini'
+import { getSocraticResponseStream, StudentTargetContext } from '@/lib/gemini'
+import { getActiveStudentTargets } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
-    const { userMessage, problem, conversationHistory, studentGrade, hints, strategies } = await request.json()
+    const { userMessage, problem, conversationHistory, studentGrade, hints, strategies, studentId } = await request.json()
 
     if (!userMessage || !problem) {
       return new Response(
@@ -21,7 +22,23 @@ export async function POST(request: NextRequest) {
     // Calculate hints already given based on conversation length
     const hintsGiven = Math.floor(formattedHistory.length / 4) // Give hint every 4 exchanges
 
+    // AI-01: Fetch student targets if studentId is provided
+    let studentTargets: StudentTargetContext[] = []
+    if (studentId) {
+      try {
+        const targets = await getActiveStudentTargets(studentId)
+        studentTargets = targets.map(t => ({
+          targetText: t.target_text,
+          targetType: t.target_type
+        }))
+      } catch (e) {
+        console.error('Failed to fetch student targets:', e)
+        // Continue without targets - non-blocking
+      }
+    }
+
     // Get streaming response from Gemini via CometAPI
+    // AI-02: Passing targets to AI for adapted teaching
     const { stream, isCorrect } = await getSocraticResponseStream(userMessage, {
       problemQuestion: problem.question,
       problemAnswer: problem.answer,
@@ -29,7 +46,8 @@ export async function POST(request: NextRequest) {
       hintsGiven,
       studentGrade: studentGrade || problem.gradeRange?.[0] || 3,
       hints: hints || problem.hints || [],
-      strategies: strategies || undefined
+      strategies: strategies || undefined,
+      studentTargets: studentTargets.length > 0 ? studentTargets : undefined
     })
 
     // Create a transform stream to parse SSE and send JSON chunks

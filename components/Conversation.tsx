@@ -17,11 +17,13 @@ interface ConversationProps {
   studentGrade?: number
   hints?: string[]
   strategies?: string
+  // AI-01: Pass studentId to fetch targets for AI personalization
+  studentId?: string
   onComplete?: (xpEarned: number) => void
   onNewProblem?: () => void
 }
 
-export function Conversation({ problem, childName = 'Student', studentGrade = 3, hints = [], strategies, onComplete, onNewProblem }: ConversationProps) {
+export function Conversation({ problem, childName = 'Student', studentGrade = 3, hints = [], strategies, studentId, onComplete, onNewProblem }: ConversationProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'model',
@@ -98,7 +100,9 @@ export function Conversation({ problem, childName = 'Student', studentGrade = 3,
           conversationHistory: messages,
           studentGrade,
           hints,
-          strategies
+          strategies,
+          // AI-01: Pass studentId for target-aware teaching
+          studentId
         })
       })
 
