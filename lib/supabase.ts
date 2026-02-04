@@ -854,3 +854,97 @@ export async function getAssignmentsForStudent(studentId: string): Promise<Exerc
 
   return Array.from(exerciseMap.values())
 }
+
+// =============================================================================
+// EXERCISE RESULTS FOR TEACHERS (VIS-02)
+// =============================================================================
+
+export interface ExerciseResult {
+  exerciseId: string
+  question: string
+  studentAnswer: string | null
+  isCorrect: boolean
+  completedAt: string
+  timeSpent: number | null
+}
+
+export async function getExerciseResultsForStudent(studentId: string): Promise<ExerciseResult[]> {
+  const supabase = createServerSupabaseClient()
+
+  // Get session logs for exercises this student completed
+  const { data: sessions, error } = await supabase
+    .from('session_logs')
+    .select('*')
+    .eq('student_id', studentId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (error) {
+    console.error('Error fetching exercise results:', error)
+    return []
+  }
+
+  return (sessions || []).map(s => ({
+    exerciseId: s.id,
+    question: s.problem_question,
+    studentAnswer: null, // We don't store the exact answer in session_logs
+    isCorrect: s.outcome === 'correct',
+    completedAt: s.created_at,
+    timeSpent: s.duration_seconds
+  }))
+}
+
+export async function getAssignmentCompletionStats(teacherId: string): Promise<{
+  totalAssigned: number
+  totalCompleted: number
+  byStudent: Record<string, { assigned: number; completed: number }>
+}> {
+  const supabase = createServerSupabaseClient()
+
+  // Get all exercises by this teacher
+  const { data: exercises } = await supabase
+    .from('exercises')
+    .select('id')
+    .eq('teacher_id', teacherId)
+
+  const exerciseIds = exercises?.map(e => e.id) || []
+  if (exerciseIds.length === 0) {
+    return { totalAssigned: 0, totalCompleted: 0, byStudent: {} }
+  }
+
+  // Get all assignments for these exercises
+  const { data: assignments } = await supabase
+    .from('exercise_assignments')
+    .select('student_id, exercise_id')
+    .in('exercise_id', exerciseIds)
+    .not('student_id', 'is', null)
+
+  const totalAssigned = assignments?.length || 0
+
+  // Get completed sessions
+  const { data: sessions } = await supabase
+    .from('session_logs')
+    .select('student_id, problem_question')
+    .eq('outcome', 'correct')
+
+  const totalCompleted = sessions?.length || 0
+
+  // Build per-student stats
+  const byStudent: Record<string, { assigned: number; completed: number }> = {}
+  assignments?.forEach(a => {
+    if (a.student_id) {
+      if (!byStudent[a.student_id]) {
+        byStudent[a.student_id] = { assigned: 0, completed: 0 }
+      }
+      byStudent[a.student_id].assigned++
+    }
+  })
+
+  sessions?.forEach(s => {
+    if (byStudent[s.student_id]) {
+      byStudent[s.student_id].completed++
+    }
+  })
+
+  return { totalAssigned, totalCompleted, byStudent }
+}

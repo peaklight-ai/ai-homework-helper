@@ -27,7 +27,11 @@ export function AssignedExercises({ studentId, compact = false, onSelectExercise
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
-        const response = await fetch(`/api/exercises/assigned?studentId=${studentId}`)
+        // Pass teacher flag to get full data including hints/strategies/answers
+        const url = isTeacherView
+          ? `/api/exercises/assigned?studentId=${studentId}&teacher=true`
+          : `/api/exercises/assigned?studentId=${studentId}`
+        const response = await fetch(url)
         if (response.ok) {
           const data = await response.json()
           setExercises(data.exercises || [])
@@ -40,7 +44,7 @@ export function AssignedExercises({ studentId, compact = false, onSelectExercise
     }
 
     fetchAssignments()
-  }, [studentId])
+  }, [studentId, isTeacherView])
 
   if (isLoading) {
     return (
