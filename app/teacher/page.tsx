@@ -14,6 +14,7 @@ import { ExerciseAssignmentModal } from '@/components/ExerciseAssignmentModal'
 import { StudentTargets } from '@/components/StudentTargets'
 import { StudentProfile } from '@/components/StudentProfile'
 import { TeacherInsights } from '@/components/TeacherInsights'
+import { AssignedExercises } from '@/components/AssignedExercises'
 import { ClassWithStudents, Exercise } from '@/lib/supabase'
 
 // =============================================================================
@@ -638,7 +639,12 @@ export default function TeacherDashboard() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate" style={{ color: '#F9FAFB' }}>{student.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium truncate" style={{ color: '#F9FAFB' }}>{student.name}</p>
+                          <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: '#1E293B', color: '#BB8CFC' }}>
+                            G{student.grade}
+                          </span>
+                        </div>
                         <div className="w-full rounded-full h-1.5 mt-1" style={{ backgroundColor: '#020617' }}>
                           <div
                             className="h-1.5 rounded-full transition-all"
@@ -837,6 +843,14 @@ export default function TeacherDashboard() {
                     <span>🧠</span> Learning Profile
                   </h3>
                   <StudentProfile studentId={selectedStudentData.id} />
+                </div>
+
+                {/* Assigned Exercises for this Student */}
+                <div className="rounded-lg p-4 mt-4" style={{ backgroundColor: '#0F172A' }}>
+                  <AssignedExercises
+                    studentId={selectedStudentData.id}
+                    isTeacherView={true}
+                  />
                 </div>
               </motion.div>
             )}

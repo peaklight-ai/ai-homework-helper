@@ -9,6 +9,7 @@ import { StudentLogin } from '@/components/StudentLogin'
 import { DiagnosticTest } from '@/components/DiagnosticTest'
 import { StudentTargets } from '@/components/StudentTargets'
 import { StudentProfile } from '@/components/StudentProfile'
+import { AssignedExercises } from '@/components/AssignedExercises'
 import { getRandomProblem, getProblemsByGrade, sampleProblems, MathProblem } from '@/lib/sampleProblems'
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar'
 import 'react-circular-progressbar/dist/styles.css'
@@ -336,10 +337,13 @@ export default function Home() {
                 </AnimatePresence>
               </motion.div>
 
-              {/* Mini Avatar */}
+              {/* Mini Avatar with Grade */}
               <div className="flex items-center gap-2 bg-white/20 rounded-xl px-3 py-2">
                 <Avatar seed={student.avatarSeed} size={32} />
-                <span className="text-white font-medium text-sm">{student.name}</span>
+                <div className="flex flex-col">
+                  <span className="text-white font-medium text-sm">{student.name}</span>
+                  <span className="text-white/70 text-xs">Grade {student.grade}</span>
+                </div>
               </div>
 
               <motion.button
@@ -460,9 +464,12 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <h1 className="text-3xl font-bold mb-2" style={{ color: '#1F2937' }}>
+            <h1 className="text-3xl font-bold mb-1" style={{ color: '#1F2937' }}>
               Hey, {student.name}! 👋
             </h1>
+            <p className="text-sm font-medium mb-2" style={{ color: '#7C3AED' }}>
+              Grade {student.grade}
+            </p>
             <p className="text-lg mb-2" style={{ color: '#6B7280' }}>
               Ready for an adventure?
             </p>
@@ -502,9 +509,10 @@ export default function Home() {
             )}
           </motion.div>
 
-          {/* Targets and Profile */}
+          {/* Targets, Assignments, and Profile */}
           <div className="space-y-4 mb-6">
             <StudentTargets studentId={student.id} compact />
+            <AssignedExercises studentId={student.id} compact />
             <StudentProfile studentId={student.id} compact />
           </div>
 

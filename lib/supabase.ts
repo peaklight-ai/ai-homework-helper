@@ -728,6 +728,10 @@ export async function createExercise(
   strategies?: string | null
 ): Promise<Exercise | null> {
   const supabase = createServerSupabaseClient()
+
+  // Log attempt for debugging
+  console.log('[createExercise] Attempting to create exercise for teacher:', teacherId)
+
   const { data, error } = await supabase
     .from('exercises')
     .insert({
@@ -744,9 +748,20 @@ export async function createExercise(
     .single()
 
   if (error) {
-    console.error('Error creating exercise:', error)
+    console.error('[createExercise] Error creating exercise:', error.message)
+    console.error('[createExercise] Error details:', {
+      code: error.code,
+      hint: error.hint,
+      details: error.details
+    })
+    // Check for common issues
+    if (error.code === '42P01') {
+      console.error('[createExercise] Table "exercises" does not exist. Run migration 002_exercises.sql')
+    }
     return null
   }
+
+  console.log('[createExercise] Exercise created successfully:', data.id)
   return data
 }
 
@@ -811,22 +826,28 @@ export async function getAssignmentsForStudent(studentId: string): Promise<Exerc
 
   const classIds = enrollments?.map(e => e.class_id) || []
 
+  // Build query filter - handle empty classIds case
+  let queryFilter = `student_id.eq.${studentId}`
+  if (classIds.length > 0) {
+    queryFilter = `student_id.eq.${studentId},class_id.in.(${classIds.join(',')})`
+  }
+
   // Get assignments for student directly or via class
   const { data: assignments, error } = await supabase
     .from('exercise_assignments')
     .select('exercise_id, exercises (*)')
-    .or(`student_id.eq.${studentId},class_id.in.(${classIds.join(',')})`)
+    .or(queryFilter)
 
   if (error) {
     console.error('Error fetching assignments:', error)
     return []
   }
 
-  // Extract unique exercises
+  // Extract unique exercises (filter out nulls from missing foreign key refs)
   const exerciseMap = new Map<string, Exercise>()
   assignments?.forEach(a => {
     const ex = a.exercises as unknown as Exercise
-    if (ex && !exerciseMap.has(ex.id)) {
+    if (ex && ex.id && !exerciseMap.has(ex.id)) {
       exerciseMap.set(ex.id, ex)
     }
   })

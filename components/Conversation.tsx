@@ -354,7 +354,8 @@ export function Conversation({ problem, childName = 'Student', studentGrade = 3,
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={limitReached ? "Message limit reached" : "Type your answer or ask a question..."}
                 disabled={isLoading || isComplete || limitReached}
-                className="flex-1 px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500 text-base text-gray-900 bg-white"
+                className="flex-1 px-4 py-3 border-2 border-purple-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-100 disabled:text-gray-400 text-base bg-white"
+                style={{ color: '#1F2937' }}
               />
               <button
                 type="submit"
