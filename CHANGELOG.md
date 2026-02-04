@@ -2,6 +2,78 @@
 
 All notable changes to AI Homework Helper will be documented in this file.
 
+## [2.3.0] - 2026-02-04
+
+### PM Feedback Fixes (6 Phases)
+
+This release addresses all PM feedback from testing: critical bugs, database migrations for pending features, data visibility, diagnostic content expansion, student management, and AI personalization.
+
+#### Phase 1: Critical Bug Fixes
+- ✅ BUG-01: Fixed exercise creation (added detailed error logging, missing table detection)
+- ✅ BUG-02: Students see assigned exercises on home screen
+- ✅ BUG-03: Teachers see assigned exercises in dashboard
+- ✅ BUG-04: Quiz loads quickly (Supabase optimizations)
+- ✅ BUG-05: Answer box text clearly visible (proper contrast)
+- ✅ BUG-06: Student grade appears next to name in UI header
+
+#### Phase 2: Database Migrations (Documentation)
+- ✅ DEPLOY-01: Created MIGRATIONS.md with instructions for Topic Mastery migration
+- ✅ DEPLOY-02: Documented Cognitive Visibility migration
+- ✅ DEPLOY-03: Topic Mastery UI ready (needs migration to show data)
+- ✅ DEPLOY-04: Cognitive Visibility UI ready (needs migration to show data)
+
+#### Phase 3: Data Visibility
+- ✅ VIS-01: Teacher can view diagnostic test scores
+- ✅ VIS-02: Teacher can view exercise completion status
+- ✅ VIS-03: Students cannot see exercise hints (data sanitization)
+- ✅ VIS-04: Students cannot see target strategies (data sanitization)
+
+#### Phase 4: Diagnostic Content Expansion
+- ✅ CONTENT-01: Subtraction questions for all grades (1-6)
+- ✅ CONTENT-02: Multiplication questions for all grades (1-6)
+- ✅ CONTENT-03: Division questions for all grades (1-6, including intro for grades 1-2)
+- ✅ CONTENT-04: Word problems for every grade/domain combination
+- ✅ CONTENT-05: Grade-level filtering documented and verified
+- ✅ CONTENT-06: Level determination algorithm fully documented
+
+**Diagnostic questions expanded from ~50 to 200+ questions** covering:
+- All 4 operations (add, subtract, multiply, divide)
+- All 6 grades with age-appropriate content
+- Both computation and word problem types
+
+#### Phase 5: Student Management
+- ✅ STUDENT-01: Teacher can edit student name
+- ✅ STUDENT-02: Teacher can edit student grade
+- ✅ STUDENT-03: Teacher can change student's class
+
+New components:
+- `EditStudentModal.tsx` - Modal for editing student info
+
+#### Phase 6: AI Target Integration
+- ✅ AI-01: AI reads student's current target at session start
+- ✅ AI-02: AI adapts teaching approach to align with target goal
+
+AI now personalizes teaching based on:
+- Skill targets: Focus hints on specific skill areas
+- Mastery targets: Build confidence and understanding
+- Streak/XP targets: Extra encouragement on correct answers
+
+### New Components
+- `AssignedExercises.tsx` - Shows assigned exercises for students/teachers
+- `EditStudentModal.tsx` - Edit student name, grade, class
+
+### New API Routes
+- `/api/exercises/assigned` - Get exercises assigned to a student
+- `PUT /api/students` - Update student name, grade, class
+
+### Database Functions Added
+- `updateStudent()` - Update student name and grade
+- `changeStudentClass()` - Move student between classes
+- `getStudentClassId()` - Get current class for student
+- `getActiveStudentTargets()` - Fetch student targets for AI
+
+---
+
 ## [2.2.0] - 2026-02-02
 
 ### Sprint 1: Teacher Experience
