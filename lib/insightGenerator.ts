@@ -64,7 +64,7 @@ export async function generateInsightsForTeacher(teacherId: string): Promise<Tea
     return []
   }
 
-  for (const student of students as StudentWithProgress[]) {
+  for (const student of students as unknown as StudentWithProgress[]) {
     const progress = Array.isArray(student.progress) ? student.progress[0] : student.progress
 
     // Check for INACTIVE (no activity in 3+ days)

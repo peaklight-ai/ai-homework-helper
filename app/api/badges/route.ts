@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check for new unlocks if requested
-    let newUnlocks = []
+    let newUnlocks: Awaited<ReturnType<typeof checkAndUnlockBadges>> = []
     if (checkNew) {
       newUnlocks = await checkAndUnlockBadges(studentId)
     }
