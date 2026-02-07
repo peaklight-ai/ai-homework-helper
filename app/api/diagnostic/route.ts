@@ -257,6 +257,22 @@ export async function POST(request: NextRequest) {
         .update({ difficulty_level: overallLevel })
         .eq('student_id', studentId)
 
+      // Sync results to topic_mastery table (FIX: was missing)
+      for (const [domain, stats] of Object.entries(results as Record<string, { correct: number; total: number; avgTime: number }>)) {
+        await supabase
+          .from('topic_mastery')
+          .upsert({
+            student_id: studentId,
+            topic: domain,
+            attempts: stats.total,
+            correct: stats.correct,
+            avg_time_seconds: stats.avgTime || null,
+            last_attempt: new Date().toISOString()
+          }, {
+            onConflict: 'student_id,topic'
+          })
+      }
+
       return NextResponse.json({
         completed: true,
         results,
